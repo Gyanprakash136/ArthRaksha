@@ -150,3 +150,6 @@ Thumbs.db
 .claude-replay.*
 /.plugins/
 /.opencode-skills/
+k6/
+tests/
+

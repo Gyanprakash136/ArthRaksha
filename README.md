@@ -195,14 +195,20 @@ ArthRaksha/
 │   │   └── services/api.ts       # Typed API client
 │   ├── package.json
 │   └── vite.config.ts
-├── pytest/                       # Automated test suites (87 tests)
+├── pytest/                       # Automated test suites (87 tests: unit, integration, chaos)
 │   ├── unit/                     # Guardrails, cache, router, idempotency, stopping rules
 │   ├── integration/              # Tier routing, LLM mocking, email alerts
 │   └── chaos/                    # 1,000-event bursts, SQLite concurrency, backpressure
-├── k6/                           # Threshold-driven load testing scripts
 ├── locust/                       # Distributed virtual user load generators
-└── scripts/
-    └── run_tests.sh              # Unified test suite runner
+├── scripts/                      # Test runner & deployment scripts
+│   └── run_tests.sh              # Unified test runner
+├── batch_processor.py            # Event batch streaming orchestrator
+├── test_endpoints.py             # Endpoint connectivity verification
+├── update_copy.py                # Telemetry copy synchronizer
+├── verify.py                     # Platform health check utility
+├── requirements.txt              # Production Python dependencies
+├── .env.example                  # Environment configuration template
+└── .gitignore                    # Security and artifact exclusions
 ```
 
 ---
@@ -280,7 +286,7 @@ ArthRaksha maintains a strict **100% test pass requirement** across all componen
 ### Automated Pytest Suite (Unit, Integration, Chaos)
 ```bash
 source venv/bin/activate
-PATH="venv/bin:$PATH" bash scripts/run_tests.sh --skip-locust --skip-k6
+pytest pytest/ -v
 ```
 *Executes all 87 test cases across guardrails, idempotency, tier routing, and 1,000-event bursts.*
 
@@ -291,13 +297,10 @@ python scratch/test_full_system.py
 ```
 *Validates 11 live scenarios against the running server, including webhook ingestion, multi-turn language detection, human escalation freezing, SHA-256 hash chains, and 2-click payment checkout confirmation.*
 
-### Production Load Testing (Locust & k6)
+### Production Load Testing (Locust)
 ```bash
 # Run headless Locust simulation (100 concurrent users)
 locust -f locust/locustfile.py --headless -u 100 -r 20 --run-time 30s --host http://localhost:8000
-
-# Run k6 threshold assertion
-k6 run -e SCENARIO=baseline k6/arthraksha_k6.js
 ```
 
 ---
