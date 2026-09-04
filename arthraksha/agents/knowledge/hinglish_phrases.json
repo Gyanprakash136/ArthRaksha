@@ -1,0 +1,9 @@
+{
+    "greeting": "Namaste {customer_name}, ArthRaksha se baat kar raha hoon.",
+    "payment_failed": "Aapka {merchant_name} ka payment ₹{amount} ka fail ho gaya tha.",
+    "payment_link": "Maine aapko ek payment link bhej diya hai, aap usse try kar sakte hain.",
+    "apology": "Asuvidha ke liye khed hai.",
+    "promise_ask": "Kya aap yeh payment kal tak clear kar payenge?",
+    "promise_confirm": "Theek hai, main record mein update kar deta hoon. Kal milte hain.",
+    "exit_survey": "Koi baat nahi, agar aap subscription cancel karna chahte hain toh main help kar sakta hoon. Ek chhota sa feedback de dijiye."
+}

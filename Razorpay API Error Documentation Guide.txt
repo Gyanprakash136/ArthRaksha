@@ -1,0 +1,858 @@
+﻿Documentation Index
+Fetch the complete documentation index at: https://razorpay-881012b3.mintlify.site/llms.txt. Use this file to discover all available pages before exploring further.
+Payment Method Error Parameters
+List of values for Source and Step parameters for each payment method supported by Razorpay.
+Available in 🇮🇳 India 🇸🇬 Singapore 🇺🇸 United States
+
+
+There are certain error codes specific for each payment method supported by Razorpay. To understand the errors and their reasons, it is recommended to know the source (stakeholders) and the steps involved in the payment flows:
+Payment Method Error Parameters
+Payment Method
+	Source Parameters
+	Cards
+	customer, business, internal, gateway, issuer_bank
+	UPI (Collect & Intent)
+	customer, business, internal, customer_psp, gateway, network, issuer_bank, beneficiary_bank
+	Netbanking
+	customer, business, internal, issuer_bank
+	Wallet
+	customer, business, internal, issuer
+	Cardless EMI
+	customer, business, internal, network, issuer
+	Emandate
+	customer, bank, business, internal, gateway, issuer_bank
+	UPI Collect Flow Deprecated
+According to NPCI guidelines, the UPI Collect flow is being deprecated effective 28 February 2026. Customers can no longer make payments or register UPI mandates by manually entering VPA/UPI id/mobile numbers.
+Exemptions:
+* MCC 6012 & 6211 (IPO and secondary market transactions).
+* iOS mobile app and mobile web transactions.
+* UPI Mandates (execute/modify/revoke operations only).
+* eRupi vouchers.
+* PACB businesses (cross-border/international payments).
+Action Required:
+If you are a new Razorpay user, use UPI Intent. If you are an existing Razorpay user not covered by exemptions, you must migrate to UPI Intent or UPI QR code to continue accepting UPI payments. For detailed migration steps, refer to the migration documentation.
+
+
+* Cards
+* UPI
+* Netbanking
+* Wallet
+* Cardless EMI
+* Emandate
+Cards
+The payment flow for Card payments is illustrated below.
+UPI
+UPI payments can be made using the following:
+Netbanking
+The payment flow for Netbanking payments is illustrated below:
+Wallet
+The payment flow for Wallet payments is illustrated below.
+Cardless EMI
+The payment flow for Cardless EMI payments is illustrated below:
+Emandate
+Common Errors
+Check the list of common errors returned in the API responses from Razorpay and their solutions. Also, check the steps to view API errors.
+Available in 🇮🇳 India 🇸🇬 Singapore 🇺🇸 United States
+
+
+View the list of common errors and their solutions below:
+The requested URL was not found on the server
+Cause:
+* Incorrect API method while calling the API.
+* Feature required for the API call is not enabled on your account.
+Solution:
+* Check and use the correct API method.
+* Contact our Support team to enable the feature on your account.
+Sample Error Response
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "The requested URL was not found on the server",
+    "source": "NA",
+    "step": "NA",
+    "reason": "NA",
+    "metadata": {}
+  }
+}
+Access Denied
+Cause: Whitelisted IPs on your account.
+Solution: Contact our Support team to verify and confirm if any IPs are currently whitelisted on your account. If yes, remove the whitelisted IPs for both test and live modes.
+Sample Error Response
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "Access Denied",
+    "source": "NA",
+    "step": "NA",
+    "reason": "NA",
+    "metadata": {}
+  }
+}
+The API key provided is invalid
+Cause:
+* Incorrect API key or secret used in the request.
+* Test mode key used in live mode or vice versa.
+* API key has been regenerated and the old key is still in use.
+Solution:
+* Verify that you are using the correct API key and secret from the Dashboard.
+* Ensure the key corresponds to the correct mode (test or live).
+* If you have recently regenerated your API key, update it in your integration.
+Sample Error Response
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "The api key provided is invalid",
+    "source": "NA",
+    "step": "NA",
+    "reason": "NA",
+    "metadata": {}
+  }
+}
+The id provided does not exist or access is unauthorised
+Cause:
+* The entity ID (such as a payment ID, order ID or refund ID) passed in the request does not exist.
+* The entity belongs to a different account than the one making the request.
+* A test mode ID is used in live mode or vice versa.
+Solution:
+* Check that the ID is correct and belongs to the authenticated account.
+* Ensure that the mode (test or live) matches the ID being used.
+Sample Error Response
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "The id provided does not exist or access is unauthorised",
+    "source": "NA",
+    "step": "NA",
+    "reason": "NA",
+    "metadata": {}
+  }
+}
+A required parameter is missing
+Cause: One or more mandatory parameters were not included in the API request.
+Solution:
+* Review the API request and ensure all required parameters are included.
+* Refer to the relevant API endpoint documentation to check which parameters are mandatory.
+Sample Error Response
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "The amount field is required.",
+    "source": "business",
+    "step": "payment_initiation",
+    "reason": "input_validation_failed",
+    "metadata": {},
+    "field": "amount"
+  }
+}
+Invalid parameter value
+Cause:
+* A parameter was passed with an incorrect data type, format or value (for example, a string passed where an integer is expected).
+* A field value exceeds the allowed length or range.
+Solution:
+* Check the data type and format expected for each parameter in the API documentation.
+* Ensure values fall within the allowed range or length limits.
+Sample Error Response
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "The amount must be an integer.",
+    "source": "business",
+    "step": "payment_initiation",
+    "reason": "input_validation_failed",
+    "metadata": {},
+    "field": "amount"
+  }
+}
+Too many requests
+Cause: Your integration has exceeded the allowed API request rate limit within a given time window.
+Solution:
+* Implement exponential backoff and retry logic in your integration.
+* Reduce the frequency of API calls, particularly for polling-based implementations.
+* Use webhooks instead of polling to receive real-time updates on payment and order events.
+* To request a limit increase, contact Razorpay Support. Requests are reviewed case-by-case and approved only for legitimate use cases.
+Sample Error Response
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "Too many requests",
+    "source": "NA",
+    "step": "NA",
+    "reason": "NA",
+    "metadata": {}
+  }
+}
+Server error
+Cause: An unexpected error occurred on the server while processing your request. This may be a transient issue.
+Solution:
+* Retry the request after a short delay.
+* Ensure the request body does not contain unsupported characters such as emojis.
+* If the issue persists, contact our Support team with the request details.
+Sample Error Response
+{
+  "error": {
+    "code": "SERVER_ERROR",
+    "description": "We are facing some trouble completing your request at the moment. Please try again shortly.",
+    "source": "NA",
+    "step": "NA",
+    "reason": "NA",
+    "metadata": {}
+  }
+}
+Handy Tips
+If you are using our SDKs for integration, the error responses result in exceptions that need to be handled in your integration.
+Endpoint-Specific Errors
+Each API endpoint page also lists errors specific to that operation — for example, errors you can only hit when creating an order, or when capturing a payment.
+To view them:
+1. Go to the relevant API endpoint page, such as Create an Order.
+2. Click the Errors capsule. The list of errors is displayed.
+Related Information
+* Payment Error Codes
+* UPI Errors
+* Card Errors
+* Payout Errors
+
+
+Payments - List of Errors
+List of payment errors with descriptions and next steps.
+Available in 🇮🇳 India 🇸🇬 Singapore 🇺🇸 United States
+
+
+Below are the top error codes associated with various payment methods, along with their reasons, descriptions and steps for resolution.
+The source field in each error response tells you where the error originated and who needs to act:
+Source Value
+	Meaning
+	Who Acts
+	customer
+	The customer made an error (wrong OTP, cancelled payment, insufficient funds).
+	Display a meaningful message and prompt them to retry.
+	business
+	Your integration sent an invalid request (missing field, wrong amount, method not enabled).
+	Fix the request parameters before retrying.
+	gateway
+	The payment gateway or bank returned an error. Usually transient.
+	Retry or ask the customer to use a different payment method.
+	razorpay
+	An internal error at Razorpay’s end.
+	Retry after a short delay. Contact support if it persists.
+	Bad Request Errors
+Error Reason
+	Detailed Error Description
+	Next Steps
+	amount_less_than_minimum_amount
+	Amount in the payment request is less than the minimum amount. Transacting through some banks have fixed fees. If the payment amount is less than the fixed fee then this error shows up.
+	Please make sure that the payment amount is more than the minimum fees associated with the bank.
+	authentication_failed
+	The payment failed as 3D secure, or OTP authentication failed. This could happen if the user cancels the payment on the authentication (OTP submit) screen or enters incorrect authentication details such as OTP.
+	The customer must enter correct authentication details to complete the payment.
+	bank_account_invalid
+	The bank account is not valid. The customer or bank could have closed the account.
+	The customer must try using a valid bank account or another method.
+	bank_account_validation_failed
+	The third party validation failed as the given bank account details were incorrect or could not be verified.
+	The customer should check the bank account details provided and try again.
+	bank_not_enabled
+	The selected bank to complete the transaction is not enabled for your business.
+	Please reach out to Razorpay to enable the selected bank.
+	bank_technical_error
+	The issuing bank was facing technical problems at the moment the payment was attempted. This usually occurs when the Core Banking System encounters a technical error while processing the payment.
+	The customer must try using another bank account or another method.
+	capture_failed
+	Payment capture has failed.
+	Please reach out to Razorpay.
+	card_expired
+	The card has expired.
+	The customer must retry with a valid card.
+	card_network_not_enabled
+	The card’s network (Visa, Mastercard, etc.) is not enabled for the merchant.
+	Please reach out to Razorpay to enable the card network.
+	card_not_enrolled
+	The card is not enrolled for this payment method.
+	Customer needs to enroll the card for this payment method or use another card.
+	card_number_invalid
+	The card number is invalid.
+	Customer needs to enter a valid card number.
+	card_type_invalid
+	The card type is invalid.
+	Customer needs to use a valid card type.
+	compliance_violation
+	The payment violates compliance requirements.
+	Please ensure the payment meets all compliance requirements.
+	debit_instrument_blocked
+	The customer is using a blocked card to complete the payment. The card could have been blocked by the issuer or by customers themselves.
+	The customer must retry with a different card or method.
+	duplicate_refund_id
+	A refund with this ID already exists.
+	Please use a unique refund ID.
+	duplicate_request
+	A duplicate request has been submitted.
+	Please avoid duplicate requests.
+	emi_greater_than_max_amount
+	The EMI amount is greater than the maximum allowed amount.
+	Please reduce the EMI amount or use another payment method.
+	emi_plan_unavailable
+	The EMI plan is not available.
+	Please choose another EMI plan or payment method.
+	incorrect_atm_pin
+	Incorrect ATM PIN entered.
+	Customer needs to enter the correct ATM PIN.
+	incorrect_card_details
+	Incorrect card details entered.
+	Customer needs to enter correct card details.
+	incorrect_card_expiry_date
+	Incorrect card expiry date entered.
+	Customer needs to enter the correct card expiry date.
+	incorrect_cardholder_name
+	Incorrect cardholder name entered.
+	Customer needs to enter the correct cardholder name.
+	incorrect_cvv
+	The customer has entered an incorrect CVV to complete the payment.
+	The customer must retry and enter the correct CVV.
+	incorrect_otp
+	The customer has entered an incorrect OTP to complete the payment.
+	The customer must retry and enter the correct OTP.
+	incorrect_pin
+	Incorrect PIN entered.
+	Customer needs to enter the correct PIN.
+	input_validation_failed
+	Payment failed due to wrong request or input sent in the payment request.
+	Rectify the validation issues and try again.
+	insufficient_funds
+	The customer does not have sufficient funds in the account to complete the payment.
+	The customer must retry with a different card or method.
+	international_transaction_not_allowed
+	International transactions are not allowed.
+	Customer needs to use a domestic payment method or enable international transactions.
+	invalid_amount
+	The amount provided is invalid.
+	Please provide a valid amount.
+	invalid_currency
+	The currency passed is not supported or is invalid.
+	Check the list of supported currencies and use the correct currency code.
+	invalid_device
+	The device used is invalid for this transaction.
+	Customer needs to use a valid device.
+	invalid_email
+	The email address provided is invalid.
+	Please provide a valid email address.
+	invalid_mobile_number
+	The mobile number provided is not valid.
+	Customer needs to provide a valid mobile number and retry.
+	invalid_order_id
+	Order ID required in the payment request is either missing or is invalid.
+	Make sure the correct order ID is always passed while initiating a new payment.
+	invalid_request
+	The request is invalid.
+	Please check the request format and retry.
+	invalid_user_details
+	Invalid user details provided.
+	Customer needs to provide valid user details.
+	invalid_vpa
+	The customer has entered an incorrect VPA to complete the payment.
+	The customer must check and enter the correct VPA.
+	live_mode_not_enabled
+	Live mode is not enabled for your business.
+	Generate the live mode keys in the Dashboard and use them in your integration.
+	merchant_not_activated
+	The merchant account is not activated.
+	Please contact Razorpay to activate the merchant account.
+	mismatch_in_transaction_details
+	There is a mismatch in transaction details.
+	Please check and correct the transaction details.
+	mobile_number_invalid
+	The mobile number is invalid.
+	Customer needs to provide a valid mobile number.
+	order_already_paid
+	There can only be one successful payment for each order ID.
+	Check for order status before initiating a new payment attempt on the order.
+	order_payment_method_mismatch
+	This error arises when the method mentioned in the order request is different from the method mentioned in the payment request.
+	Do not pass method in the create order request.
+	order_amount_mismatch
+	This error arises when the amount mentioned in the order request is different from the amount mentioned in the payment request.
+	Please make sure that the same amount is passed in both payment and order request.
+	otp_attempts_exceeded
+	OTP attempts have been exceeded.
+	Customer needs to wait and retry after some time.
+	otp_expired
+	The OTP has expired.
+	Customer needs to request a new OTP.
+	payment_cancelled
+	The customer has explicitly cancelled the payment due to which the authentication failed to complete.
+	The customer must retry to complete the payment.
+	payment_failed
+	Payment processing failed due to error at bank or wallet gateway.
+	Please retry with a different payment method.
+	payment_method_not_enabled
+	The selected payment method is not enabled for your business.
+	Reach out to Razorpay to enable payment method.
+	payment_pending_approval
+	The payment is currently pending approval by the concerned authority as part of the maker-checker flow.
+	Please reach out to the approver in your organization to get the transaction approved.
+	payment_risk_check_failed
+	Payment declined due to risk checks.
+	The customer must retry with a different card or method.
+	payment_timed_out
+	The customer did not complete the transaction within the specified time.
+	The customer must retry and complete the transaction within the time.
+	pin_attempts_exceeded
+	PIN attempts have been exceeded.
+	Customer needs to wait and retry after some time.
+	pin_not_set
+	PIN is not set for the payment method.
+	Customer needs to set a PIN for the payment method.
+	record_not_found
+	The requested record was not found.
+	Please check the details and retry.
+	recurring_payment_not_enabled
+	Recurring payments are not enabled.
+	Please enable recurring payments for your account.
+	refund_limit_crossed
+	The refund limit has been crossed.
+	Please contact Razorpay for assistance.
+	server_error
+	Technical error at Razorpay’s server.
+	Please retry after some time or reach out to Razorpay.
+	transaction_daily_limit_exceeded
+	The customer has exceeded the daily transaction limit set on the card.
+	The customer must retry using a different instrument or wait 24 hours to complete the payment.
+	transaction_limit_exceeded
+	The customers have exceeded the credit or debit limit set on their cards.
+	The customer must retry using a different bank’s card or method.
+	transaction_frequency_limit_exceeded
+	NPCI has a transaction limit both on the amount and the frequency per day.
+	Please retry using another payment method.
+	transaction_on_vpa_restricted
+	Transaction on this VPA has been temporarily / permanently blocked by the PSP.
+	The customer to retry with another UPI ID.
+	upi_app_technical_error
+	Technical error occurred at the customer’s PSP due to which the payment failed.
+	The customer must retry the payment.
+	upi_autopay_not_supported_on_psp
+	UPI Autopay is not supported on PSP.
+	Please retry with another PSP app.
+	upi_collect_not_enabled
+	UPI Collect flow is not enabled however merchant has hit the Collect payment request on API.
+	Please enable collect flow.
+	upi_intent_not_enabled
+	UPI Intent flow is not enabled however merchant has hit the Intent Payment request on API.
+	Please enable intent flow.
+	user_not_eligible
+	The customer failed the eligibility check and is not eligible for credit.
+	The customer must retry using a different payment method.
+	user_not_registered_for_netbanking
+	The customer’s bank account is not registered for netbanking.
+	The customer should register their account with the issuing bank for netbanking.
+	verification_failed
+	Verification of the payment using the status check API has failed.
+	This is a temporary error. The customer must retry.
+	Gateway Errors
+Error Reason
+	Detailed Error Description
+	Next Steps
+	authentication_failed
+	The payment failed as 3D secure, or OTP authentication failed.
+	The customer must enter correct authentication details to complete the payment.
+	authorisation_declined_by_psp
+	PSP app has rejected the authorisation request.
+	Recheck the customer’s VPA and retry.
+	bank_cutoff_in_progress
+	Bank CBS cutoff is in progress.
+	The customer must retry.
+	bank_not_available
+	Bank is not available due to a downtime or a technical issue.
+	The customer must retry.
+	bank_technical_error
+	The issuing bank was facing technical problems.
+	The customer must try using another bank account or another method.
+	beneficiary_account_does_not_exist
+	An issue with the beneficiary account which does not exist.
+	Please reach out to Razorpay.
+	beneficiary_account_dormant
+	An issue with the beneficiary account which is dormant.
+	Please reach out to Razorpay.
+	card_declined
+	The card has been declined.
+	The customer must retry with a different card or method.
+	collect_on_mcc_blocked
+	UPI Collect is blocked for this MCC (Merchant Category Code).
+	Please contact Razorpay for assistance.
+	collect_request_pending
+	A collect request is already pending for this transaction.
+	Please wait for the current request to complete or retry after some time.
+	credit_limit_exceeded
+	The customer’s credit limit has been exceeded.
+	Customer needs to reduce the amount or use another payment method.
+	credit_limit_expired
+	The customer’s credit limit has expired.
+	Customer needs to renew their credit limit or use another payment method.
+	credit_limit_inactive
+	The customer’s credit limit is inactive.
+	Customer needs to activate their credit limit or use another payment method.
+	credit_limit_not_approved
+	The customer’s credit limit is not approved.
+	Customer needs to get their credit limit approved or use another payment method.
+	credit_not_permitted
+	Credit transactions are not permitted for this customer.
+	Customer needs to use another payment method.
+	credit_failed
+	Credit processing has failed.
+	Please retry or use another payment method.
+	debit_declined
+	The debit transaction has been declined.
+	Customer needs to retry with another payment method.
+	deemed_transaction
+	The transaction is deemed and cannot be processed.
+	Please contact Razorpay for assistance.
+	debit_instrument_blocked
+	The customer is using a blocked card to complete the payment.
+	The customer must retry with a different card or method.
+	debit_instrument_inactive
+	The debit instrument is inactive.
+	Customer needs to activate the instrument or use another payment method.
+	duplicate_rrn_found
+	A duplicate RRN (Retrieval Reference Number) was found.
+	Please retry with a new transaction.
+	funds_blocked_by_mandate
+	Funds are blocked by an existing mandate.
+	Customer needs to release the mandate or use another account.
+	gateway_technical_error
+	Technical error occurred at the gateway.
+	Please retry after some time.
+	invalid_response_from_gateway
+	Invalid response received from the gateway.
+	Please retry the transaction.
+	invalid_vpa
+	The customer has entered an incorrect VPA to complete the payment.
+	The customer must check and enter the correct VPA.
+	issuer_technical_error
+	Technical error occurred at the card issuer.
+	Please retry after some time or use another card.
+	mandate_creation_declined
+	Mandate creation has been declined.
+	Customer needs to retry mandate creation or use another payment method.
+	mandate_creation_expired
+	Mandate creation has expired.
+	Customer needs to retry mandate creation.
+	mandate_creation_failed
+	Mandate creation has failed.
+	Customer needs to retry mandate creation or use another payment method.
+	mandate_creation_timeout
+	Mandate creation has timed out.
+	Customer needs to retry mandate creation.
+	mcc_amount_limit_exceeded
+	The amount limit for this MCC (Merchant Category Code) has been exceeded.
+	Please reduce the amount or contact Razorpay.
+	payment_amount_tampered
+	The payment amount has been tampered.
+	The customer must retry with the correct amount.
+	payment_cancelled
+	The customer has explicitly cancelled the payment.
+	The customer must retry to complete the payment.
+	payment_collect_request_expired
+	The payment collect request has expired.
+	Customer needs to retry the payment.
+	payment_declined
+	The payment has been declined.
+	Customer needs to retry with another payment method.
+	payment_declined_due_to_high_traffic
+	Payment declined due to high traffic at the gateway.
+	Please retry after some time.
+	payment_failed
+	Payment processing failed due to error at bank or wallet gateway.
+	Please retry with a different payment method.
+	payment_pending
+	The payment is pending and has not been completed yet.
+	Please wait for the payment to complete or retry.
+	payment_risk_check_failed
+	Payment declined due to risk checks.
+	The customer must retry with a different card or method.
+	payment_session_expired
+	The payment session has expired.
+	Customer needs to start a new payment session.
+	payment_timed_out
+	The customer did not complete the transaction within the specified time.
+	The customer must retry and complete the transaction within the time.
+	psp_app_not_available
+	PSP app is not available.
+	The customer must retry with another PSP app.
+	psp_app_not_supported
+	UPI App is not supported.
+	Please choose another PSP app and try again.
+	psp_not_available
+	PSP is not available.
+	Customer needs to retry with another PSP.
+	psp_not_registered
+	PSP is not registered.
+	Customer needs to register with a PSP or use another PSP.
+	reqauth_mandate_not_acknowledged
+	Request authentication mandate is not acknowledged.
+	Customer needs to acknowledge the mandate.
+	request_timed_out
+	The request has timed out.
+	Please retry the request.
+	server_error
+	Technical error at Razorpay’s server.
+	Please retry after some time or reach out to Razorpay.
+	transaction_daily_count_exceeded
+	The daily transaction count has been exceeded.
+	Customer needs to wait for the next day or use another payment method.
+	transaction_daily_limit_exceeded
+	The customer has exceeded the daily transaction limit set on the card.
+	The customer must retry using a different instrument or wait 24 hours to complete the payment.
+	transaction_frequency_limit_exceeded
+	NPCI has a transaction limit both on the amount and the frequency per day.
+	Please retry using another payment method.
+	user_not_eligible
+	The customer failed the eligibility check.
+	The customer must retry using a different payment method.
+	vpa_resolution_failed
+	The UPI network failed to validate the VPA.
+	The customer must retry using a different bank account or method.
+	
+
+UPI Error Codes
+Explore errors related to UPI payments, discover reasons, merchant descriptions, and actionable next steps. Available in 🇮🇳 India. Below are the top error codes associated with UPI payments, along with their reasons, descriptions, and subsequent steps for resolution.
+Cards Error Codes
+Explore errors related to card payments, discover reasons, merchant descriptions, and actionable next steps. Available in 🇮🇳 India 🇸🇬 Singapore 🇺🇸 United States Below are the top error codes associated with card payments, along with their reasons, descriptions and subsequent steps for resolution.
+Payout Error Codes
+Explore errors related to Payouts, discover reasons, merchant descriptions, and actionable next steps. Available in 🇮🇳 India.
+Error Reason
+	Detailed Error Description
+	Next Steps
+	payout_approval_not_allowed
+	Payout is not in pending state and cannot be approved or rejected.
+	Payout approval is no longer required. No further action required.
+	authentication_failed
+	The OAuth token used in the request was invalid or has expired.
+	Please check the OAuth token being used and retry again.
+	server_error
+	We are facing some trouble completing your request at the moment. Please try again shortly.
+	Retry the request using the same idempotency key and request body.
+	gateway_error
+	The request could not be completed due to an error at the payment gateway.
+	Retry the request using the same idempotency key and request body.
+	service_unavailable
+	The service is temporarily unavailable. Please try again shortly.
+	Retry the request using the same idempotency key and request body.
+	
+
+Payout Error Example
+{
+  "id": "pout_00000000000001",
+  "entity": "payout",
+  "fund_account_id": "fa_00000000000001",
+  "amount": 1000000,
+  "currency": "INR",
+  "notes": {
+    "notes_key_1": "Tea, Earl Grey, Hot",
+    "notes_key_2": "Tea, Earl Grey… decaf."
+  },
+  "fees": 0,
+  "tax": 0,
+  "status": "failed",
+  "utr": null,
+  "mode": "IMPS",
+  "purpose": "refund",
+  "reference_id": "Acme Transaction ID 12345",
+  "narration": "Acme Corp Fund Transfer",
+  "batch_id": null,
+  "failure_reason": "IMPS is not enabled on Beneficiary Account",
+  "created_at": 1545383037,
+  "error": {
+    "description": "IMPS is not enabled on beneficiary account, Retry with different mode",
+    "source": "beneficiary_bank",
+    "reason": "imps_not_allowed",
+    "code": "NA",
+    "step": "NA",
+    "metadata": {}
+  }
+}
+In this example, the payout failed because the IMPS mode was not enabled on the beneficiary account. The recommendation is to retry the transaction using a different payout mode.
+API Error Codes Structure
+* code: string; Type of the error (e.g., BAD_REQUEST_ERROR).
+* description: string; A description for the error (e.g., The id provided does not exist).
+* source: string; Possible values are 'business' (Merchant action required) or 'internal' (Technical error at Razorpay’s server).
+* reason: string; The error reason (e.g., input_validation_failed).
+* step: NA; Not applicable for API Error Codes.
+* metadata: Null value; Not applicable for API Error Codes.
+API Error Reasons and Next Steps
+Error Description
+	Next Steps
+	The requested URL was not found on the server.
+	Enter the correct URL. If the issue persists, contact support.
+	Transactions from this IP are not allowed.
+	Allowlist IPs.
+	Different request body sent for the same Idempotency Header.
+	Ensure that every payout body has a unique idempotency header.
+	We are facing some trouble completing your request at the moment.
+	Retry safely using an idempotency request or contact support.
+	HTTP Errors
+HTTP Code 400: BAD_REQUEST_ERROR
+* Error Description: Payout is not in pending state and cannot be approved or rejected.
+* Source: business
+* Reason: payout_approval_not_allowed
+* Next Steps: Payout approval is no longer required.
+HTTP Code 401: BAD_REQUEST_AUTHENTICATION_ERROR
+* Error Description: OAuth token used in the request was invalid or expired / does not have sufficient permissions.
+* Source: business
+* Reason: authentication_failed
+* Next Steps: Check the OAuth token and retry.
+HTTP Code 500: SERVER_ERROR
+* Error Description: Trouble completing the request.
+* Source: internal
+* Reason: server_error
+* Next Steps: Retry the request using the same idempotency key and request body.
+HTTP Code 502: GATEWAY_ERROR
+* Error Description: Error at the payment gateway or downstream bank.
+* Source: internal
+* Reason: gateway_error
+* Next Steps: Retry the request using the same idempotency key and request body.
+HTTP Code 503: SERVICE_UNAVAILABLE
+* Error Description: Service is temporarily unavailable.
+* Source: internal
+* Reason: service_unavailable
+* Next Steps: Retry the request using the same idempotency key and request body.
+Handling 5XX Errors
+* 5xx errors occur when servers fail to connect. Use the idempotency feature to handle these network issues.
+* Retry Rules:
+   * Use the same idempotency key and request body.
+   * You can retry within 7 calendar days.
+* Recommended Retry Schedule:
+   * 1. After 1 minute.
+   * 2. After 2 minutes.
+   * 3. After 5 minutes.
+   * If no success after 3 retries, wait 1 hour before marking as failed.
+Reducing 5XX Errors
+* If the payout was created in the first request using the same idempotency key, the response will include the created payout details and its current status (pending, processing, or failed).
+Mark Failed Status of a Payout request with 5XX error
+* 1. After 5 minutes, check the payout status using reference_id via the Fetch all payouts API.
+* 2. If no status is returned after 1 hour, mark the payout as failed.
+Webhooks
+We recommend enabling webhooks to receive instant notifications on status updates.
+* Set up via Payout Webhooks.
+Configured events trigger an HTTP POST payload in JSON format.
+Contacts
+List of Contacts APIs to create, retrieve, update and delete RazorpayX Contacts. Available in 🇮🇳 India 🇸🇬 Singapore.
+
+
+A contact is an entity to whom payouts can be made through various supported modes like UPI, IMPS, NEFT and RTGS, Cards and more. Know more about Contacts and Fund Accounts.
+
+
+It is mandatory to allowlist the IPs that you use while making payouts via APIs, else the request will fail. In case of errors, you can refer to the error codes in the respective API endpoint pages.
+
+
+Fork the Razorpay Postman Public Workspace and try the Contacts APIs using your Test API Keys.
+Related Guides
+* About Contacts
+Set Up Webhooks
+Fund Account Error Codes
+RazorpayX Fund Account Error Codes. Understand why they occur and the steps to resolve them. Available in 🇮🇳 India.
+
+
+Fund Account error codes are returned when a fund account creation fails for some reason. You can identify when a Fund Account API has failed with the response or webhooks.
+Errors Sample Code and Description
+Here is an example of how an error code appears when a fund account creation fails.
+Sample Code
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "The id provided does not exist",
+    "source": "business",
+    "step": null,
+    "reason": "input_validation_failed",
+    "metadata": {}
+  }
+}
+* code: string Not applicable for Error Codes, value displayed to maintain consistency of error object.
+* description: string A description for the error. For example, IMPS is not enabled on beneficiary account, Retry with different mode.
+* source: string Possible values: 
+   * business: The error can be fixed from your end.
+* step: string Not applicable for API Error Codes, value displayed to maintain consistency of error object.
+* reason: string The error reason. For example, input_validation_failed.
+* metadata: Null Value Not applicable for API Error Codes, value displayed to maintain consistency of error object.
+Related Information
+* Fund Account APIs
+Payout Status Details
+Fund Accounts
+List of Fund Accounts APIs to create, retrieve and activate Fund Accounts. Available in 🇮🇳 India 🇸🇬 Singapore
+
+
+Every Contact has an associated Fund Account. When you make payouts to a Contact, they receive the amount in their Fund Account. Fund Accounts can be of four types, and a Contact can have multiple Fund Accounts.
+
+
+You must create a Contact to create a Fund Account. We recommend you to create Contacts and Fund Accounts beforehand to improve the payout processing time. When making payouts, ensure to allowlist IPs, else the request will fail.
+
+
+Fork the Razorpay Postman Public Workspace and try the Fund Accounts APIs using your Test API Keys.  Run in Postman button 
+Related Guides
+* About Fund Accounts
+* Set Up Webhooks
+Webhook Payloads
+
+
+
+
+Payout Status Details
+Know the status of your payouts using the Payout Status Details API.
+Available in 🇮🇳 India
+
+
+Payout Status details are returned when a payout is created and moves to another state.
+About Status Details
+Status details are sent as part of the fetch payout API response and webhook payloads. You can also check the status details on the dashboard. It provides additional details about each payout status including intermediate status like pending, processing, queued and terminal states like reversed and failed. The details will include payout clearance SLA and why payout is in processing state. A payout update webhook is fired every time an attribute in status details changes.
+
+
+You can check status details of a payout to know why it is in the processing state. It maybe due to:
+* Deemed Success
+* NEFT/RTGS off hours
+* Partner bank or beneficiary bank issues
+* Other bank or server issues
+
+
+You can use this information to keep your beneficiaries informed.
+Status Details API Response
+Below is the sample status details response that appears as part of the status details object.
+Sample Code
+* description : string A description for the error. For example, IMPS is not enabled on beneficiary account, Retry with different mode.
+* source : string Possible values:
+   * gateway: Technical error at Razorpay partner bank.
+   * beneficiary_bank: Technical error at beneficiary bank.
+   * business: Merchant action required.
+   * internal: Technical error at Razorpay's server.
+* reason : string The error reason. For example, imps_not_allowed.
+
+
+All the reasons for any payout state appear at the source parameter of the code. The error reason, source, description and steps to be taken for various payout statuses are given below.
+Status: reversed/failed
+Status: processing
+Status: processed
+Status: pending
+Status: queued
+Related Information
+* About Payouts
+* Payout Best Practices
+Status Details via Dashboard
+Status: reversed/failed
+* bank_account_closed: Description: Payout failed as the beneficiary account is closed. Please contact the beneficiary bank. Source: beneficiary_bank. Next Steps: NA
+* bank_account_frozen: Description: Payout failed as beneficiary account is frozen. Please contact the beneficiary bank. Source: beneficiary_bank. Next Steps: NA
+* bank_account_invalid: Description: Payout failed due to invalid beneficiary account details. Source: beneficiary_bank. Next Steps: NA
+* beneficiary_account_dormant: Description: Payout failed as beneficiary account is dormant. Please contact the beneficiary bank. Source: beneficiary_bank. Next Steps: NA
+* beneficiary_bank_failure: Description: Payout failed at the beneficiary bank due to a technical issue. Please retry after 30 min. Source: beneficiary_bank. Next Steps: Retry
+* beneficiary_bank_offline: Description: Beneficiary bank systems are offline. Please retry after 30 min. Source: beneficiary_bank. Next Steps: Retry
+* beneficiary_bank_rejected: Description: Payout rejected by the beneficiary bank. Please contact the beneficiary bank. Source: beneficiary_bank. Next Steps: NA
+* beneficiary_bank_technical_error: Description: Payout failed due to a technical issue at the beneficiary bank. Please retry after 30 min. Source: beneficiary_bank. Next Steps: Retry
+* beneficiary_psp_offline: Description: Beneficiary PSP systems are offline. Please retry after 30 min. Source: beneficiary_bank. Next Steps: Retry
+* imps_not_allowed: Description: IMPS is not enabled on beneficiary account. Please retry with different mode. Source: beneficiary_bank. Next Steps: Retry with a different payment mode.
+* invalid_ifsc_code: Description: Payout failed as the IFSC code is invalid. Please correct the IFSC code and retry. Source: beneficiary_bank. Next Steps: Retry with correct IFSC code.
+* npci_beneficiary_timeout: Description: Temporary technical issue between NPCI and the beneficiary bank. Please retry after 30 min. Source: beneficiary_bank. Next Steps: Retry
+* transaction_limit_exceeded: Description: Payout amount greater than the limit supported by the beneficiary account. Source: beneficiary_bank. Next Steps: NA
+* amount_limit_exhausted_neft: Description: The NEFT 24*7 limits for your account has been exhausted. Please retry after sometime. Source: business. Next Steps: Retry
+* beneficiary_account_invalid: Description: Payout failed due to invalid beneficiary account number. Source: business. Next Steps: NA
+* beneficiary_vpa_invalid: Description: UPI validation failed. If the UPI ID is valid, please retry after sometime. Source: business. Next Steps: Ensure UPI ID is valid and retry.
+* insufficient_funds: Description: Payout failed due to insufficient funds in your account. Source: business. Next Steps: Add funds to your account and retry.
+* invalid_beneficiary: Description: Customer account does not exist with the wallet provider for the given phone number. Source: business. Next Steps: NA
+* gateway_down: Description: Payout failed as the partner bank is facing technical issues. Please retry. Source: gateway. Next Steps: Retry
+* gateway_technical_error: Description: Payout failed due to a temporary technical issue at the partner bank. Please retry after 30 min. Source: gateway. Next Steps: Retry
+* gateway_timeout: Description: Payout timed out at the partner bank. Please retry after 30 min. Source: gateway. Next Steps: Retry
+* server_error: Description: Payout failed. Contact support for help. Source: internal. Next Steps: Contact support to find out the exact issue.
+server_error_temporary: Description: Payout failed due to temporary technical issue. Please retry. Source: internal. Next Steps: Retry

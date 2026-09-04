@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "version": "1.0",
+    "source": "RBI Annual Report 2024-25, NPCI Data, Industry estimates",
+    "description": "Statistical benchmarks for payment failure rates by method, time, and bank"
+  },
+  "overall_failure_rates": {
+    "card": 0.08,
+    "upi": 0.03,
+    "netbanking": 0.12,
+    "wallet": 0.04,
+    "emandate": 0.18,
+    "nach": 0.22
+  },
+  "subscription_specific": {
+    "overall_monthly_failure_rate": 0.15,
+    "recovery_rates_by_path": {
+      "auto_retry": 0.65,
+      "payment_link": 0.42,
+      "exit_survey": 0.05,
+      "human_escalation": 0.30
+    },
+    "average_recovery_attempts": 2.3,
+    "average_days_to_recovery": 4.1,
+    "unrecoverable_rate": 0.28
+  },
+  "failure_by_hour": {
+    "00": 0.18, "01": 0.20, "02": 0.22, "03": 0.25,
+    "04": 0.24, "05": 0.19, "06": 0.12, "07": 0.09,
+    "08": 0.07, "09": 0.06, "10": 0.05, "11": 0.05,
+    "12": 0.06, "13": 0.06, "14": 0.06, "15": 0.06,
+    "16": 0.07, "17": 0.08, "18": 0.08, "19": 0.07,
+    "20": 0.07, "21": 0.08, "22": 0.10, "23": 0.14
+  },
+  "failure_by_day_of_week": {
+    "Monday": 0.08,
+    "Tuesday": 0.07,
+    "Wednesday": 0.07,
+    "Thursday": 0.08,
+    "Friday": 0.09,
+    "Saturday": 0.12,
+    "Sunday": 0.14
+  },
+  "failure_by_month_end": {
+    "days_28_to_31": 0.22,
+    "days_1_to_5": 0.18,
+    "days_6_to_27": 0.11
+  },
+  "top_banks_failure_rates": {
+    "SBI": {"upi": 0.04, "netbanking": 0.13, "card": 0.07},
+    "HDFC": {"upi": 0.02, "netbanking": 0.09, "card": 0.05},
+    "ICICI": {"upi": 0.02, "netbanking": 0.10, "card": 0.05},
+    "Axis": {"upi": 0.03, "netbanking": 0.11, "card": 0.06},
+    "Kotak": {"upi": 0.02, "netbanking": 0.10, "card": 0.06},
+    "PNB": {"upi": 0.05, "netbanking": 0.16, "card": 0.09},
+    "BOB": {"upi": 0.05, "netbanking": 0.15, "card": 0.09},
+    "Canara": {"upi": 0.06, "netbanking": 0.17, "card": 0.10},
+    "IndusInd": {"upi": 0.03, "netbanking": 0.11, "card": 0.07},
+    "Yes": {"upi": 0.04, "netbanking": 0.13, "card": 0.08},
+    "UNKNOWN": {"upi": 0.08, "netbanking": 0.18, "card": 0.12}
+  },
+  "category_distribution": {
+    "TECHNICAL": 0.35,
+    "UNINTENTIONAL": 0.42,
+    "INTENTIONAL": 0.12,
+    "AMBIGUOUS": 0.11
+  },
+  "expected_value_by_plan": {
+    "BASIC": {"avg_arpu": 299, "lifetime_months": 8},
+    "PRO": {"avg_arpu": 799, "lifetime_months": 14},
+    "PREMIUM": {"avg_arpu": 1999, "lifetime_months": 22},
+    "ENTERPRISE": {"avg_arpu": 9999, "lifetime_months": 36}
+  },
+  "churn_intent_signals": {
+    "high_intent_to_stay": ["first_failure", "long_tenure", "high_engagement", "no_support_tickets"],
+    "high_intent_to_churn": ["multiple_failures", "recent_support_complaint", "low_engagement", "no_prior_recovery"],
+    "ambiguous": ["medium_tenure", "single_prior_failure_recovered", "occasional_use"]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "description": "Streamline revenue recovery operations with an AI-driven platform that empowers merchants to manage payments, track performance, and optimize recovery strategies.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

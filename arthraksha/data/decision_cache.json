@@ -1,0 +1,55 @@
+{
+  "_meta": {
+    "description": "Cached LLM decisions to avoid repeat calls",
+    "cache_key_format": "error_code__attempt__ltv_tier",
+    "ltv_tiers": {
+      "high": "ltv > 20000",
+      "mid": "ltv 5000-20000",
+      "low": "ltv < 5000"
+    }
+  },
+  "decisions": {
+    "card_expired__0__high": {
+      "action": "payment_link",
+      "message_template": "Please update your payment method with a valid card.",
+      "cached_at": "2026-09-01T17:10:32.403153Z",
+      "success_rate": 0.5,
+      "use_count": 392
+    },
+    "incorrect_otp__0__low": {
+      "action": "email_reminder",
+      "message_template": "Payment failed because the OTP was incorrect. Please retry.",
+      "cached_at": "2026-09-01T17:14:51.857103Z",
+      "success_rate": 0.5,
+      "use_count": 21
+    },
+    "insufficient_funds__0__high": {
+      "action": "payment_link",
+      "message_template": "Your account has insufficient funds. We've sent you a payment link to try a different method.",
+      "cached_at": "2026-09-01T17:15:00.527041Z",
+      "success_rate": 0.5,
+      "use_count": 342
+    },
+    "incorrect_cvv__0__high": {
+      "action": "email_reminder",
+      "message_template": "Your card's CVV is incorrect. Please retry with the correct CVV.",
+      "cached_at": "2026-09-01T17:15:03.896592Z",
+      "success_rate": 0.5,
+      "use_count": 334
+    },
+    "insufficient_funds__0__low": {
+      "action": "payment_link",
+      "message_template": "Your account has insufficient funds. We've sent you a payment link to try a different method.",
+      "cached_at": "2026-09-02T21:49:55.851839+00:00Z",
+      "success_rate": 0.5,
+      "use_count": 16
+    },
+    "transaction_limit_exceeded__0__low": {
+      "action": "email_reminder",
+      "message_template": "Your card limit has been reached. Please try a different payment method.",
+      "cached_at": "2026-09-02T21:50:00.760711+00:00Z",
+      "success_rate": 0.5,
+      "use_count": 21
+    }
+  }
+}

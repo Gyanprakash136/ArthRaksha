@@ -1,0 +1,23 @@
+{
+    "insufficient_funds_HDFC_tenure<6_high_churn": {
+        "classification": "UNINTENTIONAL",
+        "recovery_path": "payment_link",
+        "outcome": "RECOVERED",
+        "count": 14,
+        "success_rate": 0.78
+    },
+    "issuer_technical_error_SBI_tenure>12": {
+        "classification": "TECHNICAL",
+        "recovery_path": "auto_retry",
+        "outcome": "RECOVERED",
+        "count": 42,
+        "success_rate": 0.95
+    },
+    "invalid_card_details_ICICI_first_failure": {
+        "classification": "UNINTENTIONAL",
+        "recovery_path": "payment_link",
+        "outcome": "RECOVERED",
+        "count": 21,
+        "success_rate": 0.65
+    }
+}

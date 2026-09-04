@@ -1,0 +1,1230 @@
+{
+  "meta": {
+    "version": "2.0",
+    "source": "Razorpay API Error Documentation Guide (Official) \u2014 arthraksha/data/",
+    "last_updated": "2026-08-28",
+    "description": "Real Razorpay error taxonomy built from official docs. Each entry maps error reason \u2192 category \u2192 recovery path with actual payload structure.",
+    "payload_structure": {
+      "code": "Top-level error type: BAD_REQUEST_ERROR | GATEWAY_ERROR | SERVER_ERROR",
+      "reason": "Specific machine-readable reason string (the key identifier)",
+      "source": "Who caused it: customer | business | gateway | razorpay | issuer_bank | beneficiary_bank",
+      "step": "Where in the flow: payment_initiation | payment_authentication | payment_authorization",
+      "description": "Human-readable error message",
+      "metadata": "Additional context object"
+    }
+  },
+  "error_sources": {
+    "customer": {
+      "meaning": "Customer made an error (wrong OTP, cancelled payment, insufficient funds)",
+      "who_acts": "Display a meaningful message and prompt them to retry",
+      "recovery_owner": "customer_action_required"
+    },
+    "business": {
+      "meaning": "Merchant integration sent an invalid request (missing field, wrong amount, method not enabled)",
+      "who_acts": "Fix the request parameters before retrying",
+      "recovery_owner": "merchant_fix_required"
+    },
+    "gateway": {
+      "meaning": "Payment gateway or bank returned an error. Usually transient.",
+      "who_acts": "Retry or ask the customer to use a different payment method",
+      "recovery_owner": "auto_retry"
+    },
+    "razorpay": {
+      "meaning": "Internal error at Razorpay's end",
+      "who_acts": "Retry after a short delay. Contact support if persists.",
+      "recovery_owner": "auto_retry"
+    },
+    "issuer_bank": {
+      "meaning": "Error at the card/account issuing bank",
+      "who_acts": "Customer retries with different method or bank fixes issue",
+      "recovery_owner": "customer_action_or_retry"
+    },
+    "beneficiary_bank": {
+      "meaning": "Error at the receiving/beneficiary bank (payouts)",
+      "who_acts": "Retry or contact beneficiary bank",
+      "recovery_owner": "retry_or_escalate"
+    }
+  },
+  "categories": {
+    "TECHNICAL": {
+      "description": "Infrastructure or bank-side technical failures. Not customer's fault. High retry success rate.",
+      "recovery_path": "auto_retry",
+      "retry_eligible": true,
+      "default_retry_delay_hours": 2,
+      "max_retries": 3,
+      "escalate_after_attempts": 3
+    },
+    "UNINTENTIONAL": {
+      "description": "Customer intended to pay but something went wrong \u2014 insufficient funds, expired card, wrong PIN.",
+      "recovery_path": "payment_link",
+      "retry_eligible": false,
+      "requires_customer_action": true,
+      "followup_hours": [
+        1,
+        24,
+        72
+      ],
+      "escalate_after_attempts": 3
+    },
+    "INTENTIONAL": {
+      "description": "Customer deliberately stopped payment \u2014 cancellation, dispute, fraud flag.",
+      "recovery_path": "exit_survey_then_stop",
+      "retry_eligible": false,
+      "requires_human_review": true,
+      "stop_immediately": true,
+      "escalate_after_attempts": 1
+    },
+    "AMBIGUOUS": {
+      "description": "Cannot determine intent from error code alone. Requires LLM reasoning + history.",
+      "recovery_path": "llm_classify_then_act",
+      "retry_eligible": false,
+      "needs_llm": true,
+      "escalate_after_attempts": 2
+    },
+    "MERCHANT_FIX": {
+      "description": "Integration/config error on merchant side. Not customer-recoverable. Needs merchant action.",
+      "recovery_path": "alert_merchant_stop_recovery",
+      "retry_eligible": false,
+      "stop_immediately": true,
+      "escalate_after_attempts": 1
+    }
+  },
+  "error_codes": {
+    "insufficient_funds": {
+      "reason": "insufficient_funds",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customer does not have sufficient funds in the account to complete the payment.",
+      "next_step": "The customer must retry with a different card or method.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "balance",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your account has insufficient funds. We've sent you a payment link to try a different method.",
+      "internal_note": "Send payment link immediately. High recovery rate within 24h.",
+      "frequency": "very_common",
+      "applicable_methods": [
+        "card",
+        "netbanking",
+        "upi",
+        "emandate",
+        "nach"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your payment didn't go through as it was declined by the bank. Try another payment method or contact your bank.",
+        "source": "customer",
+        "step": "payment_authorization",
+        "reason": "insufficient_funds",
+        "metadata": {
+          "payment_id": "pay_xxxxx",
+          "order_id": "order_xxxxx"
+        }
+      },
+      "recovery_probability": 0.61,
+      "agent_tier": "T2"
+    },
+    "card_expired": {
+      "reason": "card_expired",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The card has expired.",
+      "next_step": "The customer must retry with a valid card.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "card_issue",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your card has expired. Please update your payment method.",
+      "internal_note": "Send update-card link. High recovery rate.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your card has expired. Try another card.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "card_expired",
+        "metadata": {}
+      },
+      "recovery_probability": 0.74,
+      "agent_tier": "T2"
+    },
+    "card_number_invalid": {
+      "reason": "card_number_invalid",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The card number is invalid.",
+      "next_step": "Customer needs to enter a valid card number.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "card_issue",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "The card details on file appear invalid. Please update your payment method.",
+      "internal_note": "Old card on file. Send update-payment-method link.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "The card number provided is invalid.",
+        "source": "customer",
+        "step": "payment_initiation",
+        "reason": "card_number_invalid",
+        "metadata": {}
+      },
+      "recovery_probability": 0.62,
+      "agent_tier": "T2"
+    },
+    "incorrect_cvv": {
+      "reason": "incorrect_cvv",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customer has entered an incorrect CVV to complete the payment.",
+      "next_step": "The customer must retry and enter the correct CVV.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "card_issue",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your card's CVV is incorrect. Please retry with the correct CVV.",
+      "internal_note": "Customer-side error. Prompt to retry directly.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your payment didn't go through as the CVV entered is invalid.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "incorrect_cvv",
+        "metadata": {}
+      },
+      "recovery_probability": 0.69,
+      "agent_tier": "T2"
+    },
+    "incorrect_otp": {
+      "reason": "incorrect_otp",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customer has entered an incorrect OTP to complete the payment.",
+      "next_step": "The customer must retry and enter the correct OTP.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "authentication",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Payment failed because the OTP was incorrect. Please retry.",
+      "internal_note": "Customer-side. Send gentle retry nudge.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Payment failed as the OTP entered is invalid.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "incorrect_otp",
+        "metadata": {}
+      },
+      "recovery_probability": 0.71,
+      "agent_tier": "T2"
+    },
+    "otp_attempts_exceeded": {
+      "reason": "otp_attempts_exceeded",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "OTP attempts have been exceeded.",
+      "next_step": "Customer needs to wait and retry after some time.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "authentication",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Too many OTP attempts. Please wait a few minutes and try again.",
+      "internal_note": "Wait 30 min then send payment link.",
+      "followup_delay_hours": 0.5,
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "card",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "OTP generation/validation attempt limit exceeded.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "otp_attempts_exceeded",
+        "metadata": {}
+      },
+      "recovery_probability": 0.55,
+      "agent_tier": "T2"
+    },
+    "otp_expired": {
+      "reason": "otp_expired",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The OTP has expired.",
+      "next_step": "Customer needs to request a new OTP.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "authentication",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your OTP expired. Please try your payment again.",
+      "internal_note": "Immediate retry nudge \u2014 customer was mid-flow.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "OTP has expired.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "otp_expired",
+        "metadata": {}
+      },
+      "recovery_probability": 0.78,
+      "agent_tier": "T2"
+    },
+    "transaction_daily_limit_exceeded": {
+      "reason": "transaction_daily_limit_exceeded",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customer has exceeded the daily transaction limit set on the card.",
+      "next_step": "The customer must retry using a different instrument or wait 24 hours.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "limit",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your daily transaction limit has been reached. Try again tomorrow or use a different payment method.",
+      "internal_note": "Schedule retry link for next morning (8 AM).",
+      "followup_delay_hours": 24,
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "upi"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your payment didn't go through as the daily limit for your payment method has been exceeded.",
+        "source": "customer",
+        "step": "payment_authorization",
+        "reason": "transaction_daily_limit_exceeded",
+        "metadata": {}
+      },
+      "recovery_probability": 0.6,
+      "agent_tier": "T2"
+    },
+    "transaction_limit_exceeded": {
+      "reason": "transaction_limit_exceeded",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customers have exceeded the credit or debit limit set on their cards.",
+      "next_step": "The customer must retry using a different bank's card or method.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "limit",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your card limit has been reached. Please try a different payment method.",
+      "internal_note": "Suggest alternate method. High recovery with UPI if card limit hit.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your payment didn't go through as the transaction limit has been exceeded.",
+        "source": "customer",
+        "step": "payment_authorization",
+        "reason": "transaction_limit_exceeded",
+        "metadata": {}
+      },
+      "recovery_probability": 0.58,
+      "agent_tier": "T2"
+    },
+    "transaction_frequency_limit_exceeded": {
+      "reason": "transaction_frequency_limit_exceeded",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "NPCI has a transaction limit both on the amount and the frequency per day.",
+      "next_step": "Please retry using another payment method.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "limit",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "UPI transaction frequency limit reached for today. Please use your card or netbanking.",
+      "internal_note": "NPCI-imposed cap. Suggest card/netbanking alternate.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "upi"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your payment failed as NPCI transaction limit has been exceeded.",
+        "source": "customer",
+        "step": "payment_authorization",
+        "reason": "transaction_frequency_limit_exceeded",
+        "metadata": {}
+      },
+      "recovery_probability": 0.55,
+      "agent_tier": "T2"
+    },
+    "invalid_vpa": {
+      "reason": "invalid_vpa",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customer has entered an incorrect VPA to complete the payment.",
+      "next_step": "The customer must check and enter the correct VPA.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "upi_issue",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your UPI ID appears to be invalid or deregistered. Please update your payment method.",
+      "internal_note": "Customer may have switched UPI app. Get fresh VPA.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "upi"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "The VPA provided is not valid.",
+        "source": "customer",
+        "step": "payment_initiation",
+        "reason": "invalid_vpa",
+        "metadata": {}
+      },
+      "recovery_probability": 0.52,
+      "agent_tier": "T2"
+    },
+    "transaction_on_vpa_restricted": {
+      "reason": "transaction_on_vpa_restricted",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "Transaction on this VPA has been temporarily/permanently blocked by the PSP.",
+      "next_step": "The customer to retry with another UPI ID.",
+      "category": "AMBIGUOUS",
+      "subcategory": "upi_issue",
+      "retry_recommended": false,
+      "needs_llm": true,
+      "customer_message": "Your UPI ID has been restricted. Please try with another UPI ID or payment method.",
+      "internal_note": "Could be temporary PSP block or permanent. Needs LLM to decide.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "upi"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Transaction on this VPA has been temporarily blocked by the PSP.",
+        "source": "customer",
+        "step": "payment_authorization",
+        "reason": "transaction_on_vpa_restricted",
+        "metadata": {}
+      },
+      "recovery_probability": 0.4,
+      "agent_tier": "T2"
+    },
+    "authentication_failed": {
+      "reason": "authentication_failed",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The payment failed as 3D secure, or OTP authentication failed.",
+      "next_step": "The customer must enter correct authentication details to complete the payment.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "authentication",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Payment authentication failed. Please retry and enter your OTP correctly.",
+      "internal_note": "3DS failure. Send retry nudge. If repeated, send payment link.",
+      "frequency": "very_common",
+      "applicable_methods": [
+        "card",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Payment failed because authentication failed.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "authentication_failed",
+        "metadata": {}
+      },
+      "recovery_probability": 0.58,
+      "agent_tier": "T2"
+    },
+    "payment_cancelled": {
+      "reason": "payment_cancelled",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customer has explicitly cancelled the payment due to which the authentication failed to complete.",
+      "next_step": "The customer must retry to complete the payment.",
+      "category": "AMBIGUOUS",
+      "subcategory": "cancellation",
+      "retry_recommended": false,
+      "needs_llm": true,
+      "stop_immediately": false,
+      "customer_message": "You cancelled your last payment. Was it intentional? We can help you complete it.",
+      "internal_note": "Cancellation could be accidental or intentional. LLM + history to decide.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Payment processing failed because payment cancelled.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "payment_cancelled",
+        "metadata": {}
+      },
+      "recovery_probability": 0.42,
+      "agent_tier": "T2"
+    },
+    "payment_timed_out": {
+      "reason": "payment_timed_out",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customer did not complete the transaction within the specified time.",
+      "next_step": "The customer must retry and complete the transaction within the time.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "timeout",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your payment session timed out. Please retry \u2014 it only takes a few seconds.",
+      "internal_note": "Customer was present but slow. Immediate retry nudge works well.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Payment was not completed within the time limit.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "payment_timed_out",
+        "metadata": {}
+      },
+      "recovery_probability": 0.65,
+      "agent_tier": "T2"
+    },
+    "debit_instrument_blocked": {
+      "reason": "debit_instrument_blocked",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The customer is using a blocked card to complete the payment. The card could have been blocked by the issuer or by customers themselves.",
+      "next_step": "The customer must retry with a different card or method.",
+      "category": "AMBIGUOUS",
+      "subcategory": "card_issue",
+      "retry_recommended": false,
+      "needs_llm": true,
+      "customer_message": "Your card has been blocked. Please try a different payment method.",
+      "internal_note": "Self-blocked = intentional signal. Bank-blocked = unintentional. LLM needed.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "card"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your payment didn't go through as the card used is blocked.",
+        "source": "customer",
+        "step": "payment_authorization",
+        "reason": "debit_instrument_blocked",
+        "metadata": {}
+      },
+      "recovery_probability": 0.22,
+      "agent_tier": "T2"
+    },
+    "payment_risk_check_failed": {
+      "reason": "payment_risk_check_failed",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "Payment declined due to risk checks.",
+      "next_step": "The customer must retry with a different card or method.",
+      "category": "INTENTIONAL",
+      "subcategory": "risk_fraud",
+      "retry_recommended": false,
+      "stop_immediately": true,
+      "requires_human_review": true,
+      "customer_message": "This transaction could not be processed. Please contact support.",
+      "internal_note": "Risk flag. Do NOT retry. Escalate to risk/fraud team.",
+      "frequency": "rare",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your payment didn't go through as it was declined by the risk team.",
+        "source": "customer",
+        "step": "payment_authorization",
+        "reason": "payment_risk_check_failed",
+        "metadata": {}
+      },
+      "recovery_probability": 0.08,
+      "agent_tier": "T3"
+    },
+    "bank_technical_error": {
+      "reason": "bank_technical_error",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "issuer_bank",
+      "description": "The issuing bank was facing technical problems at the moment the payment was attempted.",
+      "next_step": "The customer must try using another bank account or another method.",
+      "category": "TECHNICAL",
+      "subcategory": "bank_side",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 2,
+      "customer_message": "Your bank encountered a technical issue. We'll retry automatically.",
+      "internal_note": "Bank CBS error. Auto-retry after 2h. High success rate.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "netbanking",
+        "emandate",
+        "nach"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Your payment didn't go through due to a technical issue at your bank.",
+        "source": "issuer_bank",
+        "step": "payment_authorization",
+        "reason": "bank_technical_error",
+        "metadata": {}
+      },
+      "recovery_probability": 0.88,
+      "agent_tier": "T1"
+    },
+    "bank_not_available": {
+      "reason": "bank_not_available",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "Bank is not available due to a downtime or a technical issue.",
+      "next_step": "The customer must retry.",
+      "category": "TECHNICAL",
+      "subcategory": "bank_downtime",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 1,
+      "customer_message": "Your bank is temporarily unavailable. We'll retry your payment soon.",
+      "internal_note": "Bank downtime window. Monitor status and auto-retry.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "card",
+        "netbanking",
+        "upi"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "The bank is not available. Please try again.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "bank_not_available",
+        "metadata": {}
+      },
+      "recovery_probability": 0.85,
+      "agent_tier": "T1"
+    },
+    "bank_cutoff_in_progress": {
+      "reason": "bank_cutoff_in_progress",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "Bank CBS cutoff is in progress.",
+      "next_step": "The customer must retry.",
+      "category": "TECHNICAL",
+      "subcategory": "bank_downtime",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 3,
+      "customer_message": "Your bank's systems are under maintenance. We'll retry your payment automatically.",
+      "internal_note": "End-of-day/week bank cutoff. Retry after 3h window.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "netbanking",
+        "emandate",
+        "nach"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "Bank CBS cutoff is in progress. Retry after some time.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "bank_cutoff_in_progress",
+        "metadata": {}
+      },
+      "recovery_probability": 0.87,
+      "agent_tier": "T1"
+    },
+    "gateway_technical_error": {
+      "reason": "gateway_technical_error",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "Technical error occurred at the gateway.",
+      "next_step": "Please retry after some time.",
+      "category": "TECHNICAL",
+      "subcategory": "gateway",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 2,
+      "customer_message": "A temporary gateway error occurred. We'll retry automatically.",
+      "internal_note": "Transient gateway failure. Auto-retry with exponential backoff.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking",
+        "emandate"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "Payment failed due to a technical issue at the gateway.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "gateway_technical_error",
+        "metadata": {}
+      },
+      "recovery_probability": 0.86,
+      "agent_tier": "T1"
+    },
+    "issuer_technical_error": {
+      "reason": "issuer_technical_error",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "Technical error occurred at the card issuer.",
+      "next_step": "Please retry after some time or use another card.",
+      "category": "TECHNICAL",
+      "subcategory": "issuer",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 2,
+      "customer_message": "Your card issuer encountered a technical issue. We'll retry shortly.",
+      "internal_note": "Issuer-side transient. Retry 2h later.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "Payment failed due to a technical issue at the card issuer.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "issuer_technical_error",
+        "metadata": {}
+      },
+      "recovery_probability": 0.85,
+      "agent_tier": "T1"
+    },
+    "request_timed_out": {
+      "reason": "request_timed_out",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "The request has timed out.",
+      "next_step": "Please retry the request.",
+      "category": "TECHNICAL",
+      "subcategory": "timeout",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 1,
+      "customer_message": "Payment timed out at the gateway. We'll retry automatically.",
+      "internal_note": "Network-level timeout between Razorpay and bank. Auto-retry safe.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "The request to the bank timed out.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "request_timed_out",
+        "metadata": {}
+      },
+      "recovery_probability": 0.89,
+      "agent_tier": "T1"
+    },
+    "server_error": {
+      "reason": "server_error",
+      "razorpay_code": "SERVER_ERROR",
+      "source": "razorpay",
+      "description": "Technical error at Razorpay's server.",
+      "next_step": "Please retry after some time or reach out to Razorpay.",
+      "category": "TECHNICAL",
+      "subcategory": "razorpay_internal",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 1,
+      "customer_message": "A server error occurred. Your payment was not charged. We'll retry.",
+      "internal_note": "Razorpay-side issue. Monitor status page. Retry with idempotency key.",
+      "frequency": "rare",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking",
+        "emandate",
+        "nach"
+      ],
+      "sample_payload": {
+        "code": "SERVER_ERROR",
+        "description": "We are facing some trouble completing your request at the moment. Please try again shortly.",
+        "source": "NA",
+        "step": "NA",
+        "reason": "NA",
+        "metadata": {}
+      },
+      "recovery_probability": 0.91,
+      "agent_tier": "T1"
+    },
+    "upi_app_technical_error": {
+      "reason": "upi_app_technical_error",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "Technical error occurred at the customer's PSP due to which the payment failed.",
+      "next_step": "The customer must retry the payment.",
+      "category": "TECHNICAL",
+      "subcategory": "upi_psp",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 1,
+      "customer_message": "Your UPI app encountered a technical issue. We'll retry automatically.",
+      "internal_note": "PSP-side transient. Auto-retry after 1h.",
+      "frequency": "common",
+      "applicable_methods": [
+        "upi"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "UPI payment failed due to a technical error at the customer's UPI app.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "upi_app_technical_error",
+        "metadata": {}
+      },
+      "recovery_probability": 0.86,
+      "agent_tier": "T1"
+    },
+    "mandate_creation_failed": {
+      "reason": "mandate_creation_failed",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "Mandate creation has failed.",
+      "next_step": "Customer needs to retry mandate creation or use another payment method.",
+      "category": "AMBIGUOUS",
+      "subcategory": "mandate",
+      "retry_recommended": false,
+      "needs_llm": true,
+      "customer_message": "Setting up your payment mandate failed. We'll help you fix this.",
+      "internal_note": "Could be bank refusal or PSP issue. LLM + history to classify.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "upi",
+        "emandate",
+        "nach"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "Mandate creation failed.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "mandate_creation_failed",
+        "metadata": {}
+      },
+      "recovery_probability": 0.38,
+      "agent_tier": "T2"
+    },
+    "mandate_creation_expired": {
+      "reason": "mandate_creation_expired",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "Mandate creation has expired.",
+      "next_step": "Customer needs to retry mandate creation.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "mandate",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your payment mandate setup expired. Please complete setup again.",
+      "internal_note": "Customer didn't complete in time. Send re-mandate link.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "upi",
+        "emandate"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "Mandate creation has expired.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "mandate_creation_expired",
+        "metadata": {}
+      },
+      "recovery_probability": 0.62,
+      "agent_tier": "T2"
+    },
+    "payment_declined": {
+      "reason": "payment_declined",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "The payment has been declined.",
+      "next_step": "Customer needs to retry with another payment method.",
+      "category": "AMBIGUOUS",
+      "subcategory": "generic_decline",
+      "retry_recommended": false,
+      "needs_llm": true,
+      "customer_message": "Your payment was declined. Let us help you recover it.",
+      "internal_note": "Generic decline \u2014 could be anything. LLM must classify using history + bank.",
+      "frequency": "very_common",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "The payment has been declined.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "payment_declined",
+        "metadata": {
+          "payment_id": "pay_xxxxx"
+        }
+      },
+      "recovery_probability": 0.44,
+      "agent_tier": "T2"
+    },
+    "payment_declined_due_to_high_traffic": {
+      "reason": "payment_declined_due_to_high_traffic",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "Payment declined due to high traffic at the gateway.",
+      "next_step": "Please retry after some time.",
+      "category": "TECHNICAL",
+      "subcategory": "gateway",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 1,
+      "customer_message": "Payment gateway is busy. We'll retry your payment shortly.",
+      "internal_note": "Peak-time gateway throttle. Auto-retry after 1h.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "Payment declined due to high traffic.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "payment_declined_due_to_high_traffic",
+        "metadata": {}
+      },
+      "recovery_probability": 0.84,
+      "agent_tier": "T1"
+    },
+    "vpa_resolution_failed": {
+      "reason": "vpa_resolution_failed",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "The UPI network failed to validate the VPA.",
+      "next_step": "The customer must retry using a different bank account or method.",
+      "category": "TECHNICAL",
+      "subcategory": "upi_psp",
+      "retry_recommended": true,
+      "default_retry_delay_hours": 1,
+      "customer_message": "UPI ID validation failed temporarily. We'll retry shortly.",
+      "internal_note": "NPCI/PSP resolution failure. Transient. Auto-retry.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "upi"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "UPI network failed to validate VPA.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "vpa_resolution_failed",
+        "metadata": {}
+      },
+      "recovery_probability": 0.83,
+      "agent_tier": "T1"
+    },
+    "authorisation_declined_by_psp": {
+      "reason": "authorisation_declined_by_psp",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "PSP app has rejected the authorisation request.",
+      "next_step": "Recheck the customer's VPA and retry.",
+      "category": "AMBIGUOUS",
+      "subcategory": "upi_psp",
+      "retry_recommended": false,
+      "needs_llm": true,
+      "customer_message": "Your UPI app rejected the payment. Please check and try again.",
+      "internal_note": "PSP rejection \u2014 could be app issue or deliberate. LLM to classify.",
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "upi"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "PSP app rejected the authorisation.",
+        "source": "gateway",
+        "step": "payment_authorization",
+        "reason": "authorisation_declined_by_psp",
+        "metadata": {}
+      },
+      "recovery_probability": 0.41,
+      "agent_tier": "T2"
+    },
+    "bank_account_invalid": {
+      "reason": "bank_account_invalid",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "The bank account is not valid. The customer or bank could have closed the account.",
+      "next_step": "The customer must try using a valid bank account or another method.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "account",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your linked bank account is no longer valid. Please update your payment method.",
+      "internal_note": "Account closed or invalid. Send update-payment-method link.",
+      "frequency": "rare",
+      "applicable_methods": [
+        "netbanking",
+        "emandate",
+        "nach"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "The bank account is invalid or has been closed.",
+        "source": "customer",
+        "step": "payment_authorization",
+        "reason": "bank_account_invalid",
+        "metadata": {}
+      },
+      "recovery_probability": 0.45,
+      "agent_tier": "T2"
+    },
+    "payment_session_expired": {
+      "reason": "payment_session_expired",
+      "razorpay_code": "GATEWAY_ERROR",
+      "source": "gateway",
+      "description": "The payment session has expired.",
+      "next_step": "Customer needs to start a new payment session.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "session",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Your payment session expired. Please retry \u2014 it takes just a moment.",
+      "internal_note": "Session timeout. Send fresh payment link immediately.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card",
+        "upi",
+        "netbanking"
+      ],
+      "sample_payload": {
+        "code": "GATEWAY_ERROR",
+        "description": "The payment session has expired.",
+        "source": "gateway",
+        "step": "payment_authentication",
+        "reason": "payment_session_expired",
+        "metadata": {}
+      },
+      "recovery_probability": 0.7,
+      "agent_tier": "T2"
+    },
+    "incorrect_atm_pin": {
+      "reason": "incorrect_atm_pin",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "Incorrect ATM PIN entered.",
+      "next_step": "Customer needs to enter the correct ATM PIN.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "authentication",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Incorrect PIN was entered. Please retry with your correct PIN.",
+      "internal_note": "Debit card PIN failure. Immediate retry nudge.",
+      "frequency": "common",
+      "applicable_methods": [
+        "card"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Incorrect ATM PIN entered.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "incorrect_atm_pin",
+        "metadata": {}
+      },
+      "recovery_probability": 0.68,
+      "agent_tier": "T2"
+    },
+    "pin_attempts_exceeded": {
+      "reason": "pin_attempts_exceeded",
+      "razorpay_code": "BAD_REQUEST_ERROR",
+      "source": "customer",
+      "description": "PIN attempts have been exceeded.",
+      "next_step": "Customer needs to wait and retry after some time.",
+      "category": "UNINTENTIONAL",
+      "subcategory": "authentication",
+      "retry_recommended": false,
+      "requires_customer_action": true,
+      "customer_message": "Too many PIN attempts. Your card may be temporarily locked. Try again in a few hours.",
+      "internal_note": "Card temporarily blocked after PIN failures. Follow up in 4h.",
+      "followup_delay_hours": 4,
+      "frequency": "uncommon",
+      "applicable_methods": [
+        "card"
+      ],
+      "sample_payload": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "PIN attempt limit exceeded.",
+        "source": "customer",
+        "step": "payment_authentication",
+        "reason": "pin_attempts_exceeded",
+        "metadata": {}
+      },
+      "recovery_probability": 0.52,
+      "agent_tier": "T2"
+    }
+  },
+  "recovery_paths": {
+    "auto_retry": {
+      "description": "System automatically retries payment without customer involvement",
+      "steps": [
+        "log_attempt",
+        "wait_delay",
+        "trigger_retry",
+        "log_result"
+      ],
+      "customer_notification": false,
+      "success_rate_estimate": 0.65,
+      "razorpay_retry_schedule": [
+        "after_1min",
+        "after_2min",
+        "after_5min",
+        "wait_1hr_if_no_success"
+      ]
+    },
+    "payment_link": {
+      "description": "Send customer a fresh payment link via SMS/email",
+      "steps": [
+        "generate_link",
+        "send_notification",
+        "track_click",
+        "log_result"
+      ],
+      "customer_notification": true,
+      "success_rate_estimate": 0.42
+    },
+    "exit_survey_then_stop": {
+      "description": "Send exit survey to understand churn reason, then stop recovery",
+      "steps": [
+        "send_survey",
+        "log_response",
+        "mark_churned",
+        "stop_recovery"
+      ],
+      "customer_notification": true,
+      "success_rate_estimate": 0.05
+    },
+    "llm_classify_then_act": {
+      "description": "Use LLM + history to classify, then apply appropriate path",
+      "steps": [
+        "fetch_history",
+        "llm_classify",
+        "choose_path",
+        "execute_path"
+      ],
+      "customer_notification": false,
+      "success_rate_estimate": 0.48
+    },
+    "escalate_to_human": {
+      "description": "Flag for human review \u2014 risk, legal, or support team",
+      "steps": [
+        "create_ticket",
+        "notify_team",
+        "pause_automation",
+        "await_decision"
+      ],
+      "customer_notification": false,
+      "success_rate_estimate": 0.3
+    },
+    "alert_merchant_stop_recovery": {
+      "description": "Merchant integration issue \u2014 stop recovery, alert merchant",
+      "steps": [
+        "alert_merchant",
+        "log_error",
+        "stop_recovery"
+      ],
+      "customer_notification": false,
+      "success_rate_estimate": 0.0
+    }
+  },
+  "subscription_events": {
+    "subscription.charged.failed": {
+      "event": "subscription.charged.failed",
+      "description": "Subscription charge attempt failed",
+      "category": "AMBIGUOUS",
+      "agent_tier": "T2",
+      "recovery_probability": 0.58,
+      "possible_causes": [
+        "card_expired",
+        "insufficient_funds",
+        "bank_technical_error",
+        "payment_cancelled"
+      ],
+      "requires_classification": true,
+      "classification_inputs": [
+        "error_code",
+        "customer_payment_history",
+        "months_subscribed",
+        "last_login_days_ago",
+        "previous_failures"
+      ],
+      "recovery_paths": [
+        "payment_link",
+        "auto_retry",
+        "exit_survey_then_stop"
+      ],
+      "max_attempts": 3
+    },
+    "subscription.halted": {
+      "event": "subscription.halted",
+      "description": "Subscription halted after repeated charge failures",
+      "category": "AMBIGUOUS",
+      "agent_tier": "T2",
+      "recovery_probability": 0.35,
+      "signal": "multiple_consecutive_failures",
+      "requires_classification": true,
+      "classification_inputs": [
+        "failure_count",
+        "last_error_code",
+        "customer_ltv",
+        "months_subscribed",
+        "engagement_score"
+      ],
+      "recovery_paths": [
+        "payment_link",
+        "exit_survey_then_stop",
+        "escalate_to_human"
+      ],
+      "max_attempts": 2
+    },
+    "subscription.cancelled": {
+      "event": "subscription.cancelled",
+      "description": "Subscription explicitly cancelled by customer",
+      "category": "INTENTIONAL",
+      "agent_tier": "T3",
+      "recovery_probability": 0.12,
+      "signal": "explicit_cancellation",
+      "requires_classification": false,
+      "stop_immediately": true,
+      "send_exit_survey": true,
+      "recovery_paths": [
+        "exit_survey_then_stop"
+      ],
+      "max_attempts": 1
+    }
+  }
+}

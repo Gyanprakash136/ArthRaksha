@@ -1,0 +1,152 @@
+# =============================================================================
+# ArthRaksha — Git Ignore & Security Exclusion Configuration
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Critical Secrets, Credentials & Environment Variables
+# -----------------------------------------------------------------------------
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+*.id_rsa
+secrets/
+credentials.json
+token.json
+service_account*.json
+*_service_account.json
+jwt_*.key
+
+# -----------------------------------------------------------------------------
+# 2. SQLite Databases, Transaction Data & Local Stores
+# -----------------------------------------------------------------------------
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+arthraksha.db
+idempotency.db
+ledger.db
+promises.db
+arthraksha/data/*.db
+
+# -----------------------------------------------------------------------------
+# 3. Python Runtime, Bytecode & Virtual Environments
+# -----------------------------------------------------------------------------
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+/build/
+develop-eggs/
+/dist/
+downloads/
+eggs/
+.eggs/
+/lib/
+/lib64/
+!frontend/src/lib/
+
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# -----------------------------------------------------------------------------
+# 4. Testing, Code Coverage & Dynamic Reports
+# -----------------------------------------------------------------------------
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+htmlcov/
+.tox/
+.nox/
+
+# Test output directories & benchmark files
+reports/
+scratch/
+junit_*.xml
+*.log
+*-debug.log*
+
+# Load test outputs (Locust & k6)
+locust_*
+*.csv
+k6_*.json
+!frontend/index.html
+
+
+# -----------------------------------------------------------------------------
+# 5. Frontend & Node.js Artifacts (frontend/)
+# -----------------------------------------------------------------------------
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.cache/
+frontend/.vite/
+frontend/*.tsbuildinfo
+frontend/.env*
+!frontend/.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+vite.config.*.timestamp-*
+
+# -----------------------------------------------------------------------------
+# 6. Operating System & Filesystem Metadata
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# -----------------------------------------------------------------------------
+# 7. IDE, Editor & Temporary Files
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+.tmp-*
+.claude-replay.*
+/.plugins/
+/.opencode-skills/

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "aud_ae045aa0cd",
+    "batch_id": "batch_test",
+    "event_id": "evt_test001",
+    "subscription_id": "sub_test001",
+    "payment_id": "pay_test001",
+    "merchant_id": "MID_0001",
+    "action": "RETRY_TRIGGERED",
+    "category": "TECHNICAL",
+    "recovery_path": "auto_retry",
+    "outcome": "SUCCESS",
+    "amount_rupees": 799.0,
+    "ev_rupees": 11186,
+    "attempt_number": 1,
+    "stop_reason": "",
+    "escalated": 0,
+    "agent_note": "Auto-retry succeeded on first attempt.",
+    "created_at": "2026-08-27T21:27:58.874211+00:00",
+    "metadata": "{}"
+  },
+  {
+    "id": "aud_f1ac7d9d2f",
+    "batch_id": "batch_test",
+    "event_id": "evt_test001",
+    "subscription_id": "",
+    "payment_id": "",
+    "merchant_id": "",
+    "action": "RECOVERED",
+    "category": "TECHNICAL",
+    "recovery_path": "",
+    "outcome": "SUCCESS",
+    "amount_rupees": 799.0,
+    "ev_rupees": 0,
+    "attempt_number": 1,
+    "stop_reason": "",
+    "escalated": 0,
+    "agent_note": "",
+    "created_at": "2026-08-27T21:27:58.874868+00:00",
+    "metadata": "{}"
+  }
+]

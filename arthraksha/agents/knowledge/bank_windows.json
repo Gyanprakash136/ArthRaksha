@@ -1,0 +1,14 @@
+{
+    "SBI": {
+        "downtime_hours": ["23:00", "00:00", "01:00", "02:00", "03:00", "04:00"],
+        "retry_strategy": "defer_to_morning"
+    },
+    "HDFC": {
+        "downtime_hours": ["02:00", "03:00"],
+        "retry_strategy": "standard_backoff"
+    },
+    "ICICI": {
+        "downtime_hours": ["03:00", "04:00"],
+        "retry_strategy": "standard_backoff"
+    }
+}
