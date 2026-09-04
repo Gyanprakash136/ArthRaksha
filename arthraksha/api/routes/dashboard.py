@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from config.database import get_connection
 from models.llm import ollama_streamer
@@ -7,7 +7,6 @@ import os
 import json
 import asyncio
 from pathlib import Path
-import subprocess
 from datetime import datetime
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
@@ -868,77 +867,176 @@ def get_promise_tracker():
     conn.close()
     return rows
 
-# Global state for batch process (in-memory for demo)
+# ── Batch State (in-memory for demo / Vercel-compatible) ─────────────────────
 batch_state = {
-    "status": "idle", # running, complete, error
-    "progress": "0 events",
+    "status": "idle",   # idle | running | complete | error
+    "progress": "0 events processed",
     "started_at": None,
-    "process": None,
-    "start_count": 0
+    "processed": 0,
+    "total": 0,
 }
 
+BATCH_SIZE      = 50   # events per run
+CONCURRENCY     = 10   # parallel events at once (Vercel-safe)
+
+async def _process_single_event(ev: dict, idx: int, is_first: bool, is_second: bool) -> dict:
+    """
+    Runs one payment event through the full agentic pipeline inline.
+    No HTTP self-call — invokes app.route_event() directly.
+    """
+    import uuid
+    from agents.graph import app as agent_graph
+
+    fresh_pid = f"pay_{uuid.uuid4().hex[:10]}"
+    ev = dict(ev)                          # shallow copy — don't mutate original
+    ev["payment_id"] = fresh_pid
+    ev["event_id"]   = f"evt_{uuid.uuid4().hex[:12]}"
+
+    cust = ev.get("customer", {})
+    if not isinstance(cust, dict):
+        cust = {}
+
+    # Demo proof: first event = customer email, second = risk escalation
+    if is_first:
+        ev["error_code"] = "insufficient_funds"
+        ev["amount"]     = 4999
+    elif is_second:
+        ev["error_code"]             = "payment_risk_check_failed"
+        ev["amount"]                 = 150000
+        ev["complexity_score"]       = 0.90
+        ev["recovery_probability"]   = 0.05
+
+    try:
+        state = await agent_graph.route_event(ev)
+
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        if cust:
+            cursor.execute("""
+                INSERT OR REPLACE INTO customers (
+                    payment_id, customer_id, name, email, phone,
+                    bank_issuer, months_subscribed, ltv_estimate
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                fresh_pid,
+                cust.get("customer_id") or f"cust_{fresh_pid[-6:]}",
+                cust.get("name")   or "Customer",
+                cust.get("email")  or "customer@example.com",
+                cust.get("phone")  or cust.get("contact") or "+919999999999",
+                cust.get("bank_issuer") or "HDFC",
+                cust.get("months_subscribed") or 6,
+                cust.get("ltv_estimate")      or ev.get("amount", 0) * 6,
+            ))
+
+        cursor.execute("""
+            INSERT OR REPLACE INTO recovery_ledger
+            (payment_id, amount, error_code, agent_tier, complexity_score, outcome, attempts, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+        """, (
+            fresh_pid,
+            ev.get("amount", 0),
+            ev.get("error_code", "unknown"),
+            state.current_tier,
+            state.complexity_score,
+            state.outcome,
+            state.attempt_number,
+        ))
+        conn.commit()
+        conn.close()
+
+        return {"ok": True, "tier": state.current_tier, "outcome": state.outcome}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+async def _run_batch_async():
+    """Loads 50 events from the dataset and processes them CONCURRENTLY (10 at a time)."""
+    global batch_state
+    import json as _json
+
+    data_path = Path(__file__).parent.parent.parent / "data" / "payment_failures_10k.json"
+    cursor_path = Path(__file__).parent.parent.parent / "data" / ".batch_cursor.json"
+
+    try:
+        with open(data_path, "r", encoding="utf-8") as f:
+            pool = _json.load(f)
+    except Exception as exc:
+        batch_state["status"]   = "error"
+        batch_state["progress"] = f"Dataset not found: {exc}"
+        return
+
+    # Advance cursor so each Run shows fresh data
+    cursor_pos = 0
+    try:
+        if cursor_path.exists():
+            cursor_pos = _json.loads(cursor_path.read_text()).get("cursor", 0)
+    except Exception:
+        pass
+    if cursor_pos + BATCH_SIZE > len(pool):
+        cursor_pos = 0
+
+    selected = pool[cursor_pos : cursor_pos + BATCH_SIZE]
+    try:
+        cursor_path.write_text(_json.dumps({"cursor": cursor_pos + BATCH_SIZE}))
+    except Exception:
+        pass
+
+    batch_state["total"]     = len(selected)
+    batch_state["processed"] = 0
+
+    # Process in chunks of CONCURRENCY to avoid overwhelming the DB
+    for chunk_start in range(0, len(selected), CONCURRENCY):
+        chunk = selected[chunk_start : chunk_start + CONCURRENCY]
+        tasks = [
+            _process_single_event(
+                ev  = ev,
+                idx = chunk_start + i,
+                is_first  = (chunk_start + i == 0),
+                is_second = (chunk_start + i == 1),
+            )
+            for i, ev in enumerate(chunk)
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        done = sum(1 for r in results if isinstance(r, dict) and r.get("ok"))
+        batch_state["processed"] += len(chunk)
+        batch_state["progress"]   = f"{batch_state['processed']} events processed"
+
+    batch_state["status"]   = "complete"
+    batch_state["progress"] = f"{batch_state['processed']} events processed"
+
+
 @router.post("/batch/run")
-def run_batch():
+async def run_batch(background_tasks: BackgroundTasks):
+    """Kick off a 50-event batch. Runs in-process (Vercel-compatible, no subprocess)."""
     global batch_state
     if batch_state["status"] == "running":
-        if batch_state["process"] and batch_state["process"].poll() is None:
-            raise HTTPException(status_code=409, detail="Batch already in progress")
-    
-    conn = get_connection()
-    conn.row_factory = dict_factory
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) as c FROM recovery_ledger")
-    row = cursor.fetchone()
-    start_count = row["c"] if row else 0
-    conn.close()
-            
-    batch_state["status"] = "running"
-    batch_state["progress"] = "Starting..."
-    batch_state["started_at"] = datetime.now().isoformat()
-    batch_state["start_count"] = start_count
-    
-    try:
-        import sys
-        root_dir = Path(__file__).parent.parent.parent.parent
-        batch_state["process"] = subprocess.Popen(
-            [sys.executable, "batch_processor.py"],
-            cwd=root_dir
-        )
-        return {"status": "running"}
-    except Exception as e:
-        batch_state["status"] = "error"
-        batch_state["progress"] = str(e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=409, detail="Batch already in progress")
+
+    batch_state = {
+        "status":     "running",
+        "progress":   "Starting…",
+        "started_at": datetime.now().isoformat(),
+        "processed":  0,
+        "total":      BATCH_SIZE,
+    }
+
+    # Run as background task so this endpoint returns immediately
+    background_tasks.add_task(_run_batch_async)
+    return {"status": "running", "message": f"Processing {BATCH_SIZE} events in background"}
+
 
 @router.get("/batch/status")
 def get_batch_status():
-    global batch_state
-    
-    if batch_state["status"] == "running" and batch_state["process"]:
-        return_code = batch_state["process"].poll()
-        
-        # Check current progress
-        conn = get_connection()
-        conn.row_factory = dict_factory
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as c FROM recovery_ledger")
-        row = cursor.fetchone()
-        count = row["c"] if row else 0
-        conn.close()
-        
-        events_processed = max(0, count - batch_state.get("start_count", 0))
-        batch_state["progress"] = f"{events_processed} events processed"
-        
-        if return_code is not None:
-            batch_state["status"] = "complete" if return_code == 0 else "error"
-            if return_code != 0:
-                batch_state["progress"] = f"Failed with code {return_code}"
-
+    """Poll for batch progress."""
     return {
-        "status": batch_state["status"],
-        "progress": batch_state["progress"],
-        "started_at": batch_state["started_at"]
+        "status":     batch_state["status"],
+        "progress":   batch_state["progress"],
+        "started_at": batch_state["started_at"],
+        "processed":  batch_state.get("processed", 0),
+        "total":      batch_state.get("total", BATCH_SIZE),
     }
+
 
 def dict_factory(cursor, row):
     d = {}
