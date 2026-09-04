@@ -1,4 +1,23 @@
-requests>=2.31.0
-python-dotenv>=1.0.1
+# Core API framework
 fastapi>=0.111.0
-uvicorn>=0.30.1
+uvicorn[standard]>=0.30.1
+
+# Data validation
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+
+# HTTP client (async + sync)
+httpx>=0.27.0
+requests>=2.31.0
+
+# Environment / config
+python-dotenv>=1.0.1
+
+# Numerical computation (ML classifier)
+numpy>=1.26.4
+
+# Fake data generation (seeding / dev)
+Faker>=25.0.0
+
+# Multipart form-data support for FastAPI
+python-multipart>=0.0.9
