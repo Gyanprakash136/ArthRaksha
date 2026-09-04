@@ -6,9 +6,23 @@ from pathlib import Path
 # Load environment variables
 load_dotenv()
 
-# Get DB path from env, fallback to default
-db_path_str = os.getenv("DATABASE_PATH", "data/arthraksha.db")
-DB_PATH = Path(__file__).parent.parent / db_path_str
+# Get DB path from env, fallback to default (with Vercel serverless /tmp support)
+if os.getenv("VERCEL"):
+    DB_PATH = Path("/tmp/arthraksha.db")
+    seed_db = Path(__file__).parent.parent / "data" / "arthraksha.db"
+    if seed_db.exists() and not DB_PATH.exists():
+        try:
+            import shutil
+            shutil.copy2(seed_db, DB_PATH)
+        except Exception:
+            pass
+else:
+    db_path_str = os.getenv("DATABASE_PATH", "data/arthraksha.db")
+    if os.path.isabs(db_path_str):
+        DB_PATH = Path(db_path_str)
+    else:
+        DB_PATH = Path(__file__).parent.parent / db_path_str
+
 
 def get_connection():
     """Returns a connection to the SQLite database."""
