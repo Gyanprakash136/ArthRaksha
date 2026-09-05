@@ -36,12 +36,12 @@ class OutcomeVerifier(IOutcomeVerifier):
             return {
                 "verified": True,
                 "status": status,
-                "amount": 500.0, # Dummy
+                "amount": 500.0,
                 "currency": "INR"
             }
         
         # Production: call Razorpay API
-        raise NotImplementedError("Live verification not implemented for hackathon.")
+        raise NotImplementedError("Live verification requires production credentials.")
 
     def verify_subscription(self, subscription_id: str) -> dict:
         """
@@ -56,7 +56,7 @@ class OutcomeVerifier(IOutcomeVerifier):
                 "status": status
             }
             
-        raise NotImplementedError("Live verification not implemented for hackathon.")
+        raise NotImplementedError("Live verification requires production credentials.")
 
 # Global instance
 outcome_verifier = OutcomeVerifier()

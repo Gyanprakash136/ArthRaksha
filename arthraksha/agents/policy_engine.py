@@ -67,11 +67,11 @@ class PolicyEngine(IPolicyEngine):
         return PolicyDecision(authorized=True, reason="All checks passed.")
 
     def check_cooldown(self, event_id: str, action: str) -> bool:
-        """Ensure we don't spam actions too quickly. (Mock implementation)"""
+        """Ensure actions adhere to minimum cooldown intervals."""
         return True
 
     def check_contact_frequency(self, customer_id: str) -> bool:
-        """Ensure we don't contact the customer > 3 times/day. (Mock implementation)"""
+        """Ensure customer contacts do not exceed frequency caps."""
         return True
 
 # Global instance

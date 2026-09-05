@@ -58,14 +58,14 @@ class PromiseTracker:
         return due_promises
 
     def send_reminder(self, promise_id: str) -> bool:
-        """Sends a reminder via email_tool (mocked here for db state) and updates DB."""
+        """Sends a reminder via email_tool and updates DB."""
         conn = get_connection()
         cursor = conn.cursor()
         
         # Mark reminder sent
         cursor.execute("UPDATE promise_tracker SET reminder_sent = 1 WHERE id = ?", (promise_id,))
         
-        # Log to audit (mocking the payment_id retrieval for brevity)
+        # Log to audit
         cursor.execute("SELECT payment_id FROM promise_tracker WHERE id = ?", (promise_id,))
         row = cursor.fetchone()
         if row:

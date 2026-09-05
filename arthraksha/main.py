@@ -40,9 +40,6 @@ async def run_batch_and_scorecard():
     
     # 5. Run Insight Agent and Collect Scorecard Metrics
     insight_agent = InsightAgent()
-    # Actually, we already wrote the logic inside insight_agent run_batch, but the user spec for main.py says:
-    # "run insight_agent.run(results)" -> the prompt doesn't specify if it's run_batch or run. I'll pass events to it or calculate here.
-    # Wait, my insight_agent has `run_batch` which takes events. Since I just ran them here, I'll extract metrics here.
     
     total_at_risk = sum(e["amount"] for e in events)
     recovered = [r for r in results if not isinstance(r, Exception) and r.outcome == "recovered"]

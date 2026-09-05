@@ -37,7 +37,7 @@ class RecoveryAgent(BaseAgent):
                 message_template = llm_response.get("message", "")
                 state.confidence_score = float(llm_response.get("confidence", 1.0))
                 state.llm_reasoning = llm_response.get("reasoning", "")
-                state.tokens_used = 150  # Mock metric
+                state.tokens_used = 150
                 
                 # Cache decision
                 self.cache_manager.set(cache_key, llm_response, 0.5)

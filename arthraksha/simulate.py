@@ -1,27 +1,4 @@
 #!/usr/bin/env python3
-"""
-ArthRaksha Scenario Simulator
-==============================
-Fires 80 realistic Indian payment failure events through the full pipeline.
-Results populate recovery_ledger, audit_log, and sent_emails.log.
-
-Usage:
-    cd /Users/gyanprakash09/Developer/ArthRaksha
-    source venv/bin/activate
-    python arthraksha/simulate.py [--events 80] [--host http://localhost:8000]
-
-Distribution (matches Razorpay real-world failure stats):
-    ~24 T1  TECHNICAL      (30%)  → auto-retry
-    ~45 T2  UNINTENTIONAL  (56%)  → LLM + email/link/WhatsApp
-    ~11 T3  INTENTIONAL    (14%)  → escalated
-
-Indian merchant context:
-    - Names from common Indian name pool
-    - Amounts in ₹ (SaaS subscriptions, D2C orders, EMI payments)
-    - Error codes from Razorpay taxonomy
-    - Phone numbers: +91 9XXXXXXXXX format
-    - Emails: realistic Indian domain patterns
-"""
 
 import argparse
 import asyncio

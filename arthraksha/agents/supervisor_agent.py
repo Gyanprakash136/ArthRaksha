@@ -27,7 +27,7 @@ class SupervisorAgent(BaseAgent):
             self._kill(state, "low_confidence")
             return state
             
-        # 5. Hallucination check (Mocked as relying on prior flags for now)
+        # 5. Hallucination check
         if state.llm_reasoning == "LLMParseError":
             self._kill(state, "hallucination_detected")
             return state

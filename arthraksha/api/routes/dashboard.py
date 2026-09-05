@@ -686,6 +686,60 @@ def get_metrics():
     }
 
 
+@router.post("/reset")
+def reset_all_data():
+    """
+    Wipes all batch-generated data from the database so the next Run Batch
+    starts with a completely clean slate.
+
+    Clears: recovery_ledger, audit_log, customers, idempotency_store,
+            voice_sessions, promise_tracker
+    Also resets the batch cursor file so events start from position 0.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    tables = [
+        "recovery_ledger",
+        "audit_log",
+        "customers",
+        "idempotency_store",
+        "voice_sessions",
+        "promise_tracker",
+    ]
+    for table in tables:
+        try:
+            cursor.execute(f"DELETE FROM {table}")
+        except Exception:
+            pass  # Table may not exist on first run
+
+    conn.commit()
+    conn.close()
+
+    # Reset batch cursor so next run starts from event 0
+    cursor_path = Path(__file__).parent.parent.parent / "data" / ".batch_cursor.json"
+    try:
+        cursor_path.write_text('{"cursor": 0}')
+    except Exception:
+        pass
+
+    # Reset in-memory batch state
+    global batch_state
+    batch_state = {
+        "status":     "idle",
+        "progress":   "0 events processed",
+        "started_at": None,
+        "processed":  0,
+        "total":      0,
+    }
+
+    return {
+        "status":  "reset",
+        "message": "All batch data cleared. Database is ready for a fresh run.",
+        "cleared": tables,
+    }
+
+
 @router.get("/cases")
 def get_cases(tier: str = None, status: str = None, error_code: str = None):
     """Paginated list of all cases."""
@@ -731,7 +785,7 @@ def get_cases(tier: str = None, status: str = None, error_code: str = None):
     rows = cursor.fetchall()
     conn.close()
     
-    # Add amount_recovered mock logic
+    # Compute amount_recovered
     for r in rows:
         r["amount_recovered"] = r["amount"] if r["outcome"] == "recovered" else 0
         

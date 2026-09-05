@@ -34,9 +34,7 @@ class InsightAgent:
                 else:
                     misses += 1
                     
-        # Calculate final metrics as requested
         cache_hit_rate = (hits / total_t2_events) if total_t2_events > 0 else 0.0
-        # The user specifically requested: tokens_saved = misses * 450
         tokens_saved = misses * 450
         estimated_cost_saved = tokens_saved * 0.0001
         

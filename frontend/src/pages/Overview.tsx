@@ -66,7 +66,7 @@ const DEFAULT_COLORS = ["#3B82F6", "#8B5CF6", "#F97316"];
 
 function BubbleChart({ details }: { details: any[] }) {
   if (!details || details.length === 0) return null;
-  // Dynamic coordinates based on index to mock bubble placement
+  // Dynamic coordinates based on index for bubble placement
   const c = [
     { cx: 64, cy: 72, r: 50 },
     { cx: 152, cy: 58, r: 35 },

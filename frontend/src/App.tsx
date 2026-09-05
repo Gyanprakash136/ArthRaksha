@@ -74,6 +74,18 @@ export default function App() {
     }
   };
 
+  const resetData = async () => {
+    if (batchStatus === "running") return;
+    try {
+      await fetch(`${API_BASE}/dashboard/reset`, { method: "POST" });
+      setBatchStatus("idle");
+      setBatchProgress("");
+      setRefreshTick(t => t + 1); // force metrics refresh
+    } catch {
+      // silent fail
+    }
+  };
+
   const merchantName = localStorage.getItem("merchantName") || "Acme Corp";
   const merchantInitial = merchantName.charAt(0).toUpperCase();
 
@@ -211,6 +223,23 @@ export default function App() {
               </>
             )}
             <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+          </button>
+          <button
+            onClick={resetData}
+            disabled={batchStatus === "running"}
+            title="Clear all batch data and start fresh"
+            style={{
+              padding: "6px 12px", borderRadius: 7,
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              color: "rgba(255,255,255,0.6)", fontSize: 11.5, fontWeight: 500,
+              cursor: batchStatus === "running" ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", gap: 5,
+              opacity: batchStatus === "running" ? 0.4 : 1,
+              transition: "all 0.15s"
+            }}
+          >
+            ↺ Reset Data
           </button>
         </div>
 

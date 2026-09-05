@@ -7374,3 +7374,63 @@ Reason: Risk score >= 0.85
   "audit_log": []
 }
 ```
+
+## Escalation: pay_28c3b141cf
+Reason: Risk score >= 0.85
+```json
+{
+  "payment_id": "pay_28c3b141cf",
+  "amount": 150000,
+  "error_code": "payment_risk_check_failed",
+  "customer_ltv": 11988,
+  "actions_taken": [],
+  "escalation_reason": "Risk score >= 0.85",
+  "recommended_action": "human_review",
+  "audit_log": []
+}
+```
+
+## Escalation: pay_759c065a68
+Reason: Risk score >= 0.85
+```json
+{
+  "payment_id": "pay_759c065a68",
+  "amount": 2999,
+  "error_code": "payment_risk_check_failed",
+  "customer_ltv": 38987,
+  "actions_taken": [],
+  "escalation_reason": "Risk score >= 0.85",
+  "recommended_action": "human_review",
+  "audit_log": []
+}
+```
+
+## Escalation: pay_a8227e9257
+Reason: Risk score >= 0.85
+```json
+{
+  "payment_id": "pay_a8227e9257",
+  "amount": 499,
+  "error_code": "payment_risk_check_failed",
+  "customer_ltv": 9980,
+  "actions_taken": [],
+  "escalation_reason": "Risk score >= 0.85",
+  "recommended_action": "human_review",
+  "audit_log": []
+}
+```
+
+## Escalation: pay_715a74c3de
+Reason: Risk score >= 0.85
+```json
+{
+  "payment_id": "pay_715a74c3de",
+  "amount": 150000,
+  "error_code": "payment_risk_check_failed",
+  "customer_ltv": 16467,
+  "actions_taken": [],
+  "escalation_reason": "Risk score >= 0.85",
+  "recommended_action": "human_review",
+  "audit_log": []
+}
+```

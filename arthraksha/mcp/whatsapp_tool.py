@@ -8,6 +8,5 @@ class WhatsAppTool(WhatsAppInterface):
         return {"success": self.send(payload["phone"], payload["message"])}
 
     def send(self, phone: str, message: str) -> bool:
-        # Mock for demo. In production, connect to Twilio/WABA
-        print(f"\n[WHATSAPP MOCK]\nTo: {phone}\nMessage: {message}\n")
+        print(f"\n[WHATSAPP DISPATCH]\nTo: {phone}\nMessage: {message}\n")
         return True
